@@ -5,7 +5,7 @@
 
 import { IWebSocketRepository, PlayerAction } from '@/domain/repositories';
 import { GameState } from '@/domain/entities';
-import { GameStateMapper } from '../mappers/GameStateMapper';
+import { GameStateMapper } from '@/application/mappers/GameStateMapper';
 import { GameStateUpdateMessage } from '@/infrastructure/websocket/types';
 
 export class GameService {

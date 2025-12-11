@@ -1,4 +1,4 @@
-import { RootState } from './store';
+import { RootState } from '@/store/store';
 
 // Game Selectors
 export const selectGameState = (state: RootState) => state.game.gameState;

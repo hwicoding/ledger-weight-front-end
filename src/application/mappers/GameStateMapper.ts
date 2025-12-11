@@ -4,7 +4,7 @@
  */
 
 import { GameState, GameEvent, TurnState } from '@/domain/entities';
-import { PlayerMapper, PlayerDTO } from './PlayerMapper';
+import { PlayerMapper, PlayerDTO } from '@/application/mappers/PlayerMapper';
 import { GameStateUpdateMessage } from '@/infrastructure/websocket/types';
 
 /**

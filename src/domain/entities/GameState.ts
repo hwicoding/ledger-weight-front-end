@@ -3,9 +3,9 @@
  * 순수한 비즈니스 객체 (외부 의존성 없음)
  */
 
-import { Player } from './Player';
-import { GameEvent } from './GameEvent';
-import { TurnState } from './TurnState';
+import { Player } from '@/domain/entities/Player';
+import { GameEvent } from '@/domain/entities/GameEvent';
+import { TurnState } from '@/domain/entities/TurnState';
 
 export type GamePhase = 'lobby' | 'playing' | 'finished';
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RootStackParamList } from './types';
-import LobbyScreen from '../features/lobby/view/LobbyScreen';
-import GameScreen from '../features/game/view/GameScreen';
+import { RootStackParamList } from '@/presentation/navigation/types';
+import LobbyScreen from '@/presentation/features/lobby/view/LobbyScreen';
+import GameScreen from '@/presentation/features/game/view/GameScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

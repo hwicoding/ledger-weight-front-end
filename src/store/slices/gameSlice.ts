@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GameState, GameEvent, TurnState, Player } from '../types';
+import { GameState, GameEvent, TurnState, Player } from '@/store/types';
 
 interface GameSliceState {
   gameState: GameState | null;

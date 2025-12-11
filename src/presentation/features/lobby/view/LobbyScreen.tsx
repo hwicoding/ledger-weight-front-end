@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../navigation/types';
-import { useLobbyViewModel } from '../viewmodel/LobbyViewModel';
+import { RootStackParamList } from '@/presentation/navigation/types';
+import { useLobbyViewModel } from '@/presentation/features/lobby/viewmodel/LobbyViewModel';
 
 type LobbyScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

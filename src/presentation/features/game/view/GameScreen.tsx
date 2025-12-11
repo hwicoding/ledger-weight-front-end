@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../../../navigation/types';
-import { useGameViewModel } from '../viewmodel/GameViewModel';
+import { RootStackParamList } from '@/presentation/navigation/types';
+import { useGameViewModel } from '@/presentation/features/game/viewmodel/GameViewModel';
 
 type GameScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

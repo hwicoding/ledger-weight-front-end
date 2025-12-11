@@ -3,7 +3,7 @@
  * 싱글톤 패턴으로 WebSocket 연결 관리
  */
 
-import { WebSocketRepository } from './WebSocketRepository';
+import { WebSocketRepository } from '@/infrastructure/websocket/WebSocketRepository';
 import { IWebSocketRepository } from '@/domain/repositories';
 
 class WebSocketService {

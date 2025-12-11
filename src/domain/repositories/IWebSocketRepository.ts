@@ -3,7 +3,7 @@
  * Domain Layer에서 정의 (Infrastructure Layer에서 구현)
  */
 
-import { GameState } from '../entities/GameState';
+import { GameState } from '@/domain/entities/GameState';
 
 /**
  * WebSocket에서 수신하는 게임 상태 업데이트

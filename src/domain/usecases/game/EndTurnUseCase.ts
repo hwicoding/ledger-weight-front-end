@@ -3,8 +3,8 @@
  * 턴 종료 비즈니스 로직
  */
 
-import { IWebSocketRepository, PlayerAction } from '../../repositories';
-import { GameState } from '../../entities/GameState';
+import { IWebSocketRepository, PlayerAction } from '@/domain/repositories';
+import { GameState } from '@/domain/entities/GameState';
 
 export class EndTurnUseCase {
   constructor(

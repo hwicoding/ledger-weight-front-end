@@ -3,8 +3,8 @@
  * 순수한 비즈니스 객체 (외부 의존성 없음)
  */
 
-import { Card } from './Card';
-import { PlayerRole, Treasure } from './types';
+import { Card } from '@/domain/entities/Card';
+import { PlayerRole, Treasure } from '@/domain/entities/types';
 
 export class Player {
   constructor(

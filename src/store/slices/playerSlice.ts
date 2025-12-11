@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Player, Card } from '../types';
+import { Player, Card } from '@/store/types';
 
 interface PlayerSliceState {
   currentPlayerId: string | null; // 현재 로그인한 플레이어 ID

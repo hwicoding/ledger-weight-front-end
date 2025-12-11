@@ -3,7 +3,7 @@
  * 로비 참가 비즈니스 로직
  */
 
-import { IWebSocketRepository } from '../../repositories';
+import { IWebSocketRepository } from '@/domain/repositories';
 
 export class JoinLobbyUseCase {
   constructor(private websocketRepository: IWebSocketRepository) {}

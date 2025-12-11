@@ -3,7 +3,7 @@
  * 순수한 비즈니스 객체 (외부 의존성 없음)
  */
 
-import { CardSuit, CardRank } from './types';
+import { CardSuit, CardRank } from '@/domain/entities/types';
 
 export class Card {
   constructor(

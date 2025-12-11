@@ -3,10 +3,10 @@
  * 카드 사용 비즈니스 로직
  */
 
-import { IWebSocketRepository, PlayerAction } from '../../repositories';
-import { GameState } from '../../entities/GameState';
-import { Player } from '../../entities/Player';
-import { Card } from '../../entities/Card';
+import { IWebSocketRepository, PlayerAction } from '@/domain/repositories';
+import { GameState } from '@/domain/entities/GameState';
+import { Player } from '@/domain/entities/Player';
+import { Card } from '@/domain/entities/Card';
 
 export class UseCardUseCase {
   constructor(

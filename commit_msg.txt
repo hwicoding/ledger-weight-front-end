@@ -1,0 +1,2 @@
+251211 > front-end > react-native > Import 경로 절대 경로로 변경
+

@@ -4,7 +4,7 @@
  */
 
 import { IWebSocketRepository, GameStateUpdate, PlayerAction } from '@/domain/repositories';
-import { WebSocketClient } from './WebSocketClient';
+import { WebSocketClient } from '@/infrastructure/websocket/WebSocketClient';
 
 export class WebSocketRepository implements IWebSocketRepository {
   private client: WebSocketClient;
