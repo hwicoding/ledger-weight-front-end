@@ -1,2 +1,2 @@
-251211 > front-end > react-native > Import 경로 절대 경로로 변경
+251211 > front-end > react-native > UI 컴포넌트 구현: 카드, 플레이어, 게임 보드, 타이머 컴포넌트 추가
 

@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/presentation/navigation/types';
 import { useGameViewModel } from '@/presentation/features/game/viewmodel/GameViewModel';
+import { GameBoard, HandCards } from '@/presentation/features/game/components';
+import { TimerDisplay, CardComponent } from '@/presentation/shared/components';
+import { Card } from '@/domain/entities/Card';
 
 type GameScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -36,6 +39,10 @@ export default function GameScreen() {
     navigation.navigate('Lobby');
   };
 
+  const handleCardSelect = (card: Card) => {
+    selectCard(card.id);
+  };
+
   const handleUseCard = () => {
     if (selectedCard) {
       useCard(selectedCard.id);
@@ -57,87 +64,120 @@ export default function GameScreen() {
         <Text style={styles.subtitle}>Game ID: {gameId}</Text>
       </View>
 
-      {/* 게임 상태 표시 */}
+      {/* 게임 상태 및 타이머 */}
       {gameState && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>게임 상태</Text>
-          <Text style={styles.info}>Phase: {gameState.phase}</Text>
-          <Text style={styles.info}>현재 턴: {turnPlayer?.role || 'N/A'}</Text>
+        <View style={styles.gameStatusSection}>
+          <View style={styles.statusInfo}>
+            <Text style={styles.phaseText}>
+              Phase: {gameState.phase === 'lobby' ? '로비' : gameState.phase === 'playing' ? '게임 중' : '종료'}
+            </Text>
+            <Text style={styles.turnText}>
+              현재 턴: {turnPlayer?.role || 'N/A'}
+            </Text>
+          </View>
           {turnState && (
-            <Text style={styles.info}>남은 시간: {turnState.timeLeft}초</Text>
+            <TimerDisplay timeLeft={turnState.timeLeft} />
           )}
         </View>
       )}
 
-      {/* 플레이어 목록 */}
-      {players.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>플레이어 목록</Text>
-          {players.map(player => (
-            <View key={player.id} style={styles.playerItem}>
-              <Text style={styles.playerName}>
-                {player.role} (HP: {player.hp}, 영향력: {player.influence})
-              </Text>
-              {player.id === gameState?.currentTurn && (
-                <Text style={styles.turnIndicator}>← 현재 턴</Text>
-              )}
-            </View>
-          ))}
+      {/* 게임 보드 (플레이어 목록) */}
+      {gameState && players.length > 0 && (
+        <View style={styles.gameBoardSection}>
+          <Text style={styles.sectionTitle}>플레이어</Text>
+          <GameBoard
+            gameState={gameState}
+            currentPlayerId={currentPlayer?.id || null}
+            layout="table"
+          />
         </View>
       )}
 
       {/* 현재 플레이어 핸드 카드 */}
-      {currentPlayer && currentPlayer.hand.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>내 핸드 카드</Text>
-          {currentPlayer.hand.map(card => (
-            <View
-              key={card.id}
-              style={[
-                styles.cardItem,
-                selectedCard?.id === card.id && styles.selectedCard,
-              ]}
-            >
-              <Button
-                title={`${card.name} (${card.suit} ${card.rank})`}
-                onPress={() => selectCard(card.id)}
-              />
-            </View>
-          ))}
-        </View>
+      {currentPlayer && (
+        <HandCards
+          cards={currentPlayer.hand}
+          selectedCardId={selectedCard?.id || null}
+          onCardSelect={handleCardSelect}
+        />
       )}
 
       {/* 선택된 카드 및 액션 */}
       {selectedCard && (
-        <View style={styles.section}>
+        <View style={styles.selectedCardSection}>
           <Text style={styles.sectionTitle}>선택된 카드</Text>
-          <Text style={styles.info}>
-            {selectedCard.name} ({selectedCard.suit} {selectedCard.rank})
-          </Text>
+          <View style={styles.selectedCardContainer}>
+            <CardComponent
+              card={selectedCard}
+              isSelected={true}
+              size="large"
+            />
+            {selectedCard.description && (
+              <Text style={styles.cardDescription}>{selectedCard.description}</Text>
+            )}
+          </View>
           <View style={styles.buttonRow}>
-            <Button title="카드 사용" onPress={handleUseCard} />
-            <Button title="선택 해제" onPress={clearSelection} />
+            <TouchableOpacity
+              style={[styles.actionButton, styles.useButton]}
+              onPress={handleUseCard}
+            >
+              <Text style={styles.buttonText}>카드 사용</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={clearSelection}
+            >
+              <Text style={styles.buttonText}>선택 해제</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* 응답 필요 시 */}
-      {turnState?.requiredResponse && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>응답 필요</Text>
-          <Text style={styles.info}>{turnState.requiredResponse.message}</Text>
-          <View style={styles.buttonRow}>
-            <Button title="회피" onPress={handleRespondEvade} />
-            <Button title="포기" onPress={handleRespondGiveUp} />
+      {/* 응답 필요 시 모달 */}
+      <Modal
+        visible={!!turnState?.requiredResponse}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>응답 필요</Text>
+            <Text style={styles.modalMessage}>
+              {turnState?.requiredResponse?.message || '응답이 필요합니다'}
+            </Text>
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.evadeButton]}
+                onPress={handleRespondEvade}
+              >
+                <Text style={styles.modalButtonText}>회피</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.giveUpButton]}
+                onPress={handleRespondGiveUp}
+              >
+                <Text style={styles.modalButtonText}>포기</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      )}
+      </Modal>
 
       {/* 액션 버튼 */}
-      <View style={styles.section}>
-        <Button title="턴 종료" onPress={endTurn} />
-        <View style={styles.spacing} />
-        <Button title="로비로 돌아가기" onPress={handleBackToLobby} />
+      <View style={styles.actionSection}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.endTurnButton]}
+          onPress={endTurn}
+        >
+          <Text style={styles.buttonText}>턴 종료</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.backButton]}
+          onPress={handleBackToLobby}
+        >
+          <Text style={styles.buttonText}>로비로 돌아가기</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -165,55 +205,146 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#666',
   },
-  section: {
+  gameStatusSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginHorizontal: 10,
+    borderRadius: 8,
+  },
+  statusInfo: {
+    flex: 1,
+  },
+  phaseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  turnText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  gameBoardSection: {
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginHorizontal: 10,
+    borderRadius: 8,
+    paddingVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    marginHorizontal: 16,
+    color: '#333',
+  },
+  selectedCardSection: {
     padding: 20,
     backgroundColor: '#fff',
     marginTop: 10,
     marginHorizontal: 10,
     borderRadius: 8,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+  selectedCardContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
   },
-  info: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
-  },
-  playerItem: {
-    padding: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
-    marginBottom: 5,
-  },
-  playerName: {
-    fontSize: 16,
-    color: '#333',
-  },
-  turnIndicator: {
+  cardDescription: {
+    marginTop: 12,
     fontSize: 14,
-    color: '#007AFF',
-    fontWeight: 'bold',
-    marginTop: 5,
-  },
-  cardItem: {
-    marginBottom: 10,
-  },
-  selectedCard: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: 5,
-    padding: 5,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 10,
+    marginTop: 16,
   },
-  spacing: {
-    height: 10,
+  actionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  useButton: {
+    backgroundColor: '#4caf50',
+  },
+  cancelButton: {
+    backgroundColor: '#757575',
+  },
+  endTurnButton: {
+    backgroundColor: '#ff9800',
+  },
+  backButton: {
+    backgroundColor: '#757575',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  actionSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginHorizontal: 10,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  evadeButton: {
+    backgroundColor: '#4caf50',
+  },
+  giveUpButton: {
+    backgroundColor: '#f44336',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
