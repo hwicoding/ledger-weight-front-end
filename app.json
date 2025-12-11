@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "temp-expo-project",
-    "slug": "temp-expo-project",
+    "name": "ledger-weight",
+    "slug": "ledger-weight",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
