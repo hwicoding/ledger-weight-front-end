@@ -63,6 +63,11 @@
 - **완료**: ✅ UseCardUseCase, EndTurnUseCase, RespondAttackUseCase, JoinLobbyUseCase
 - **이유**: 비즈니스 로직을 Domain Layer에 캡슐화하여 재사용성과 테스트 용이성 향상
 
+### ViewModel 구현
+- **완료**: ✅ GameViewModel, LobbyViewModel
+- **이유**: MVVM 패턴 완성, View와 로직 분리로 재사용성 및 테스트 용이성 향상
+- **구현 방식**: Custom Hook으로 구현, Redux Store 및 UseCase 연동
+
 ---
 
 ## 🔧 트러블슈팅
