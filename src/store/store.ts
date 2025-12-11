@@ -1,8 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
+import gameReducer from './slices/gameSlice';
+import playerReducer from './slices/playerSlice';
+import uiReducer from './slices/uiSlice';
 
 export const store = configureStore({
   reducer: {
-    // 슬라이스들이 여기에 추가됩니다
+    game: gameReducer,
+    player: playerReducer,
+    ui: uiReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
