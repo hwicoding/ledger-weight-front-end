@@ -26,12 +26,12 @@
 **상태**: ✅ 완료
 
 ### Phase 4: UI 구현
-- [ ] 로비 화면 (플레이어 목록)
-- [ ] 인게임 보드 기본 레이아웃
-- [ ] 카드 UI 컴포넌트
-- [ ] 플레이어 상태 표시 컴포넌트
+- [x] 로비 화면 (플레이어 목록) - 기본 구조 완료
+- [x] 인게임 보드 기본 레이아웃 - 기본 구조 완료
+- [ ] 카드 UI 컴포넌트 - 개선 필요
+- [ ] 플레이어 상태 표시 컴포넌트 - 개선 필요
 
-**상태**: ⏳ 예정
+**상태**: 🚧 진행 중
 
 ### Phase 5: 게임 로직 연동
 - [ ] GAME_STATE_UPDATE 수신 및 UI 업데이트
@@ -67,6 +67,13 @@
 - **완료**: ✅ GameViewModel, LobbyViewModel
 - **이유**: MVVM 패턴 완성, View와 로직 분리로 재사용성 및 테스트 용이성 향상
 - **구현 방식**: Custom Hook으로 구현, Redux Store 및 UseCase 연동
+
+### View에서 ViewModel 사용
+- **완료**: ✅ GameScreen, LobbyScreen에서 ViewModel 연동
+- **이유**: MVVM 패턴 완성, View는 UI만 담당하고 로직은 ViewModel에 위임
+- **구현 내용**: 
+  - GameScreen: 게임 상태, 플레이어 목록, 핸드 카드, 카드 사용, 턴 종료, 응답 인터페이스
+  - LobbyScreen: 로비 참가, 연결 상태 표시, 게임 시작
 
 ---
 
