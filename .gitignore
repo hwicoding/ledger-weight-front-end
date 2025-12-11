@@ -137,3 +137,92 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# OS Files
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# React Native
+# Build files
+build/
+dist/
+*.apk
+*.aab
+*.ipa
+*.app
+
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+ios/*.xcuserdata
+ios/.xcode.env.local
+ios/DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+ios/.xcode.env.local
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+*.iml
+.gradle/
+local.properties
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+
+# React Native Metro
+.metro-health-check*
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+
+# Storybook
+storybook-static/
+storybook-build/
+*.stories.js.snap
+*.stories.ts.snap
+
+# Cursor
+.cursor/
+.cursorrules
