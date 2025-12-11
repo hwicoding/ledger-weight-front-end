@@ -50,6 +50,19 @@
 - **결정**: ✅ Redux Toolkit
 - **이유**: 클린 아키텍처와의 완벽한 통합, 복잡한 게임 상태 관리에 적합, 실시간 업데이트 처리 용이
 
+### 아키텍처 패턴 선택
+- **고려 사항**: 클린 아키텍처 + MVVM 패턴
+- **결정**: ✅ 클린 아키텍처 + MVVM 패턴
+- **이유**: 
+  - Domain Layer 독립성: 비즈니스 로직이 프레임워크와 분리
+  - 테스트 용이성: 각 레이어를 독립적으로 테스트 가능
+  - 유지보수성: 레이어별 책임 명확화
+  - MVVM: View와 ViewModel 분리로 재사용성 향상
+
+### UseCase 구현
+- **완료**: ✅ UseCardUseCase, EndTurnUseCase, RespondAttackUseCase, JoinLobbyUseCase
+- **이유**: 비즈니스 로직을 Domain Layer에 캡슐화하여 재사용성과 테스트 용이성 향상
+
 ---
 
 ## 🔧 트러블슈팅
