@@ -36,6 +36,7 @@ export interface Player {
   treasures: Treasure[];
   hand: Card[];
   tableCards?: Card[];
+  isBot?: boolean; // AI 플레이어 여부
 }
 
 export interface TurnState {

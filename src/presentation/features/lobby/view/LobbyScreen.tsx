@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, TextInput, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/presentation/navigation/types';
@@ -26,6 +26,14 @@ export default function LobbyScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('info');
+  
+  // 방 생성 관련 상태
+  const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
+  const [roomName, setRoomName] = useState('');
+  const [minPlayers, setMinPlayers] = useState(2);
+  const [maxPlayers, setMaxPlayers] = useState(4);
+  const [aiPlayerCount, setAiPlayerCount] = useState(0);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   console.log('🖥️ LobbyScreen: State initialized');
 
@@ -83,6 +91,36 @@ export default function LobbyScreen() {
     setToastVisible(true);
   };
 
+  const handleCreateRoom = () => {
+    if (!playerName) {
+      setToastMessage('플레이어 이름을 입력해주세요.');
+      setToastType('warning');
+      setToastVisible(true);
+      return;
+    }
+    
+    // 방 생성 로직 (백엔드 연동 전까지는 임시로 게임 ID 생성)
+    const newGameId = roomName || `game-${Date.now()}`;
+    setGameId(newGameId);
+    setShowCreateRoomModal(false);
+    
+    // 방 생성 후 자동으로 참가
+    setTimeout(() => {
+      joinLobby(newGameId, playerName);
+      setToastMessage('방이 생성되었습니다.');
+      setToastType('success');
+      setToastVisible(true);
+    }, 100);
+  };
+
+  const handleOpenCreateRoom = () => {
+    setShowCreateRoomModal(true);
+  };
+
+  const handleCloseCreateRoom = () => {
+    setShowCreateRoomModal(false);
+  };
+
   console.log('🖥️ LobbyScreen: About to render JSX');
   
   return (
@@ -92,6 +130,19 @@ export default function LobbyScreen() {
         <Text style={styles.title}>장부의 무게</Text>
         <Text style={styles.subtitle}>로비 화면</Text>
       </View>
+
+      {/* 방 생성 섹션 */}
+      {!isConnected && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>방 생성</Text>
+          <Text style={styles.description}>
+            새로운 게임 방을 생성하고 AI 플레이어와 함께 플레이할 수 있습니다.
+          </Text>
+          <View style={styles.buttonContainer}>
+            <Button title="방 생성" onPress={handleOpenCreateRoom} />
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>로비 참가</Text>
@@ -182,6 +233,7 @@ export default function LobbyScreen() {
                     player={domainPlayer}
                     isCurrentPlayer={isCurrentPlayer}
                     size="small"
+                    isBot={player.isBot || false}
                   />
                 </View>
               );
@@ -198,6 +250,154 @@ export default function LobbyScreen() {
         visible={toastVisible}
         onDismiss={() => setToastVisible(false)}
       />
+
+      {/* 방 생성 모달 */}
+      <Modal
+        visible={showCreateRoomModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseCreateRoom}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>방 생성</Text>
+            
+            <Text style={styles.label}>방 이름 (선택사항)</Text>
+            <TextInput
+              style={styles.input}
+              value={roomName}
+              onChangeText={setRoomName}
+              placeholder="방 이름을 입력하세요"
+            />
+
+            <Text style={styles.label}>플레이어 이름</Text>
+            <TextInput
+              style={styles.input}
+              value={playerName}
+              onChangeText={setPlayerName}
+              placeholder="플레이어 이름을 입력하세요"
+            />
+
+            <Text style={styles.label}>최소 플레이어 수: {minPlayers}</Text>
+            <View style={styles.sliderContainer}>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setMinPlayers(Math.max(2, minPlayers - 1))}
+              >
+                <Text style={styles.sliderButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.sliderValue}>{minPlayers}</Text>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setMinPlayers(Math.min(maxPlayers - 1, minPlayers + 1))}
+              >
+                <Text style={styles.sliderButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>최대 플레이어 수: {maxPlayers}</Text>
+            <View style={styles.sliderContainer}>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setMaxPlayers(Math.max(minPlayers + 1, maxPlayers - 1))}
+              >
+                <Text style={styles.sliderButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.sliderValue}>{maxPlayers}</Text>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setMaxPlayers(Math.min(8, maxPlayers + 1))}
+              >
+                <Text style={styles.sliderButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>AI 플레이어 수: {aiPlayerCount}</Text>
+            <View style={styles.sliderContainer}>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setAiPlayerCount(Math.max(0, aiPlayerCount - 1))}
+              >
+                <Text style={styles.sliderButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.sliderValue}>{aiPlayerCount}</Text>
+              <TouchableOpacity
+                style={styles.sliderButton}
+                onPress={() => setAiPlayerCount(Math.min(maxPlayers - 1, aiPlayerCount + 1))}
+              >
+                <Text style={styles.sliderButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>AI 난이도</Text>
+            <View style={styles.difficultyContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.difficultyButton,
+                  aiDifficulty === 'easy' && styles.difficultyButtonActive,
+                ]}
+                onPress={() => setAiDifficulty('easy')}
+              >
+                <Text
+                  style={[
+                    styles.difficultyButtonText,
+                    aiDifficulty === 'easy' && styles.difficultyButtonTextActive,
+                  ]}
+                >
+                  쉬움
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.difficultyButton,
+                  aiDifficulty === 'medium' && styles.difficultyButtonActive,
+                ]}
+                onPress={() => setAiDifficulty('medium')}
+              >
+                <Text
+                  style={[
+                    styles.difficultyButtonText,
+                    aiDifficulty === 'medium' && styles.difficultyButtonTextActive,
+                  ]}
+                >
+                  보통
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.difficultyButton,
+                  aiDifficulty === 'hard' && styles.difficultyButtonActive,
+                ]}
+                onPress={() => setAiDifficulty('hard')}
+              >
+                <Text
+                  style={[
+                    styles.difficultyButtonText,
+                    aiDifficulty === 'hard' && styles.difficultyButtonTextActive,
+                  ]}
+                >
+                  어려움
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={handleCloseCreateRoom}
+              >
+                <Text style={[styles.modalButtonText, { color: '#333' }]}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.createButton]}
+                onPress={handleCreateRoom}
+              >
+                <Text style={[styles.modalButtonText, { color: '#fff' }]}>생성</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -296,6 +496,98 @@ const styles = StyleSheet.create({
   },
   playerItem: {
     marginBottom: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+    textAlign: 'center',
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  sliderButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sliderButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  sliderValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginHorizontal: 20,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  difficultyContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  difficultyButton: {
+    flex: 1,
+    padding: 12,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+  },
+  difficultyButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  difficultyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  difficultyButtonTextActive: {
+    color: '#fff',
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#e0e0e0',
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

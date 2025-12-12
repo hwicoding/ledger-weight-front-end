@@ -17,6 +17,7 @@ interface GameBoardProps {
   selectedTarget?: string | null;
   onTargetSelect?: (playerId: string) => void;
   canTargetPlayer?: (playerId: string) => boolean;
+  playerIsBotMap?: Map<string, boolean>; // 플레이어 ID별 AI 여부
 }
 
 export default function GameBoard({
@@ -27,6 +28,7 @@ export default function GameBoard({
   selectedTarget = null,
   onTargetSelect,
   canTargetPlayer,
+  playerIsBotMap,
 }: GameBoardProps) {
   const { players, currentTurn } = gameState;
 
@@ -86,6 +88,7 @@ export default function GameBoard({
                 size="medium"
                 isSelected={isSelected}
                 isTargetable={isTargetable}
+                isBot={playerIsBotMap?.get(player.id) || false}
               />
             </View>
           );

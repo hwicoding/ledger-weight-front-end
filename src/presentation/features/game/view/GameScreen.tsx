@@ -177,6 +177,16 @@ export default function GameScreen() {
     respondAttack('give_up');
   };
 
+  // 플레이어별 AI 여부 Map 생성
+  const playerIsBotMap = React.useMemo(() => {
+    if (!gameState) return new Map<string, boolean>();
+    const map = new Map<string, boolean>();
+    gameState.players.forEach(player => {
+      map.set(player.id, player.isBot || false);
+    });
+    return map;
+  }, [gameState]);
+
   return (
     <View style={styles.wrapper}>
       <ScrollView style={styles.container}>
@@ -217,6 +227,7 @@ export default function GameScreen() {
             selectedTarget={selectedTarget}
             onTargetSelect={selectTarget}
             canTargetPlayer={canTargetPlayer}
+            playerIsBotMap={playerIsBotMap}
           />
         </View>
       )}

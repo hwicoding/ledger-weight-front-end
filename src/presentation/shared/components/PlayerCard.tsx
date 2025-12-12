@@ -15,6 +15,7 @@ interface PlayerCardProps {
   size?: 'small' | 'medium' | 'large';
   isSelected?: boolean;
   isTargetable?: boolean;
+  isBot?: boolean; // AI 플레이어 여부
 }
 
 /**
@@ -60,6 +61,7 @@ export default function PlayerCard({
   size = 'medium',
   isSelected = false,
   isTargetable = false,
+  isBot = false,
 }: PlayerCardProps) {
   const roleColor = getRoleColor(player.role);
   const roleIcon = getRoleIcon(player.role);
@@ -94,6 +96,11 @@ export default function PlayerCard({
       <View style={styles.header}>
         <Text style={styles.roleIcon}>{roleIcon}</Text>
         <Text style={[styles.role, { color: roleColor }]}>{player.role}</Text>
+        {isBot && (
+          <View style={styles.botBadge}>
+            <Text style={styles.botText}>🤖 AI</Text>
+          </View>
+        )}
       </View>
 
       {/* 재력 (HP) */}
@@ -260,6 +267,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#007AFF',
+  },
+  botBadge: {
+    marginLeft: 8,
+    backgroundColor: '#9c27b0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  botText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 
