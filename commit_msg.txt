@@ -1,2 +1,0 @@
-251211 > front-end > react-native > 프로젝트 이름 변경: ledger-weight로 수정
-

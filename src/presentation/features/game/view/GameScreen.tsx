@@ -7,7 +7,8 @@ import { RootStackParamList } from '@/presentation/navigation/types';
 import { useGameViewModel } from '@/presentation/features/game/viewmodel/GameViewModel';
 import { GameBoard, HandCards } from '@/presentation/features/game/components';
 import { TimerDisplay, CardComponent } from '@/presentation/shared/components';
-import { Card } from '@/domain/entities/Card';
+import { Card as DomainCard, GameState as DomainGameState, Player as DomainPlayer, TurnState as DomainTurnState } from '@/domain/entities';
+import { Card as StoreCard, GameState as StoreGameState } from '@/store/types';
 
 type GameScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,7 +40,56 @@ export default function GameScreen() {
     navigation.navigate('Lobby');
   };
 
-  const handleCardSelect = (card: Card) => {
+  // Store 타입을 Domain Entity로 변환하는 헬퍼 함수
+  const convertStoreCardToDomain = (storeCard: StoreCard): DomainCard => {
+    return new DomainCard(
+      storeCard.id,
+      storeCard.name,
+      storeCard.suit,
+      storeCard.rank,
+      storeCard.description
+    );
+  };
+
+  const convertStoreGameStateToDomain = (storeGameState: StoreGameState): DomainGameState => {
+    const domainPlayers = storeGameState.players.map(p => {
+      const player = new DomainPlayer(
+        p.id,
+        p.role,
+        p.hp,
+        p.influence,
+        p.treasures,
+        p.hand.map(c => convertStoreCardToDomain(c)),
+        p.tableCards?.map(c => convertStoreCardToDomain(c)) || []
+      );
+      return player;
+    });
+
+    // TurnState 생성
+    const domainTurnState = new DomainTurnState(
+      storeGameState.turnState.currentTurn,
+      storeGameState.turnState.timeLeft,
+      storeGameState.turnState.requiredResponse
+    );
+
+    const gameState = new DomainGameState(
+      storeGameState.gameId,
+      domainPlayers,
+      storeGameState.currentTurn,
+      domainTurnState,
+      storeGameState.events.map(e => ({
+        id: e.id,
+        timestamp: e.timestamp,
+        message: e.message,
+        type: e.type,
+      })),
+      storeGameState.phase
+    );
+
+    return gameState;
+  };
+
+  const handleCardSelect = (card: DomainCard) => {
     selectCard(card.id);
   };
 
@@ -86,7 +136,7 @@ export default function GameScreen() {
         <View style={styles.gameBoardSection}>
           <Text style={styles.sectionTitle}>플레이어</Text>
           <GameBoard
-            gameState={gameState}
+            gameState={convertStoreGameStateToDomain(gameState)}
             currentPlayerId={currentPlayer?.id || null}
             layout="table"
           />
@@ -96,7 +146,7 @@ export default function GameScreen() {
       {/* 현재 플레이어 핸드 카드 */}
       {currentPlayer && (
         <HandCards
-          cards={currentPlayer.hand}
+          cards={currentPlayer.hand.map(c => convertStoreCardToDomain(c))}
           selectedCardId={selectedCard?.id || null}
           onCardSelect={handleCardSelect}
         />
@@ -108,7 +158,7 @@ export default function GameScreen() {
           <Text style={styles.sectionTitle}>선택된 카드</Text>
           <View style={styles.selectedCardContainer}>
             <CardComponent
-              card={selectedCard}
+              card={convertStoreCardToDomain(selectedCard)}
               isSelected={true}
               size="large"
             />

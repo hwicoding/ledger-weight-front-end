@@ -3,6 +3,8 @@
  * React Native의 WebSocket을 래핑한 클라이언트
  */
 
+import { logger } from '@/utils/logger';
+
 export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export interface WebSocketMessage {
@@ -36,6 +38,7 @@ export class WebSocketClient {
 
     this.url = url;
     this.status = 'connecting';
+    logger.info('WebSocketClient', `연결 시도: ${url}`);
 
     return new Promise((resolve, reject) => {
       try {
@@ -44,7 +47,7 @@ export class WebSocketClient {
         this.ws.onopen = () => {
           this.status = 'connected';
           this.reconnectAttempts = 0;
-          console.log('WebSocket connected');
+          logger.info('WebSocketClient', 'WebSocket 연결 성공', { url });
           this.connectHandlers.forEach(handler => handler());
           resolve();
         };
@@ -52,23 +55,24 @@ export class WebSocketClient {
         this.ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            logger.debug('WebSocketClient', '메시지 수신', { type: message.type, data: message.data });
             this.handleMessage(message);
           } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
+            logger.error('WebSocketClient', '메시지 파싱 실패', error);
           }
         };
 
         this.ws.onerror = (error) => {
           this.status = 'error';
           const errorObj = new Error('WebSocket error');
-          console.error('WebSocket error:', error);
+          logger.error('WebSocketClient', 'WebSocket 에러 발생', { error, url });
           this.errorHandlers.forEach(handler => handler(errorObj));
           reject(errorObj);
         };
 
         this.ws.onclose = () => {
           this.status = 'disconnected';
-          console.log('WebSocket disconnected');
+          logger.info('WebSocketClient', 'WebSocket 연결 종료', { url });
           this.disconnectHandlers.forEach(handler => handler());
           this.attemptReconnect();
         };
@@ -97,13 +101,16 @@ export class WebSocketClient {
    */
   send(message: WebSocketMessage): void {
     if (!this.ws || this.status !== 'connected') {
-      throw new Error('WebSocket is not connected');
+      const error = new Error('WebSocket is not connected');
+      logger.error('WebSocketClient', '메시지 전송 실패: 연결되지 않음', error);
+      throw error;
     }
 
     try {
+      logger.debug('WebSocketClient', '메시지 전송', { type: message.type, data: message.data });
       this.ws.send(JSON.stringify(message));
     } catch (error) {
-      console.error('Failed to send WebSocket message:', error);
+      logger.error('WebSocketClient', '메시지 전송 실패', error);
       throw error;
     }
   }

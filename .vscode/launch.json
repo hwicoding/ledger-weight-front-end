@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Expo",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Attach to Expo",
+      "type": "node",
+      "request": "attach",
+      "port": 8081,
+      "sourceMaps": true,
+      "console": "integratedTerminal"
+    }
+  ]
+}
+

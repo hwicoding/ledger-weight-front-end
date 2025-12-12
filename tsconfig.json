@@ -4,13 +4,34 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/domain/*": ["src/domain/*"],
-      "@/application/*": ["src/application/*"],
-      "@/infrastructure/*": ["src/infrastructure/*"],
-      "@/presentation/*": ["src/presentation/*"],
-      "@/store/*": ["src/store/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/domain/*": [
+        "src/domain/*"
+      ],
+      "@/application/*": [
+        "src/application/*"
+      ],
+      "@/infrastructure/*": [
+        "src/infrastructure/*"
+      ],
+      "@/presentation/*": [
+        "src/presentation/*"
+      ],
+      "@/store/*": [
+        "src/store/*"
+      ],
+      "@/utils/*": [
+        "src/utils/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }

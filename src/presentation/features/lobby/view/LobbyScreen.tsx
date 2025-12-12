@@ -11,13 +11,23 @@ type LobbyScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function LobbyScreen() {
+  console.log('🖥️ LobbyScreen: Component rendering...');
+  
   const navigation = useNavigation<LobbyScreenNavigationProp>();
   const [gameId, setGameId] = useState('temp-game-001');
   const [playerName, setPlayerName] = useState('');
 
+  console.log('🖥️ LobbyScreen: State initialized');
+
   // ViewModel 사용
-  const { isConnecting, isConnected, joinLobby, leaveLobby, startGame } =
-    useLobbyViewModel();
+  // React Hooks는 조건부로 호출할 수 없으므로 try-catch로 감쌀 수 없음
+  // 대신 ViewModel 내부에서 에러 처리를 해야 함
+  console.log('🖥️ LobbyScreen: Calling useLobbyViewModel...');
+  const viewModel = useLobbyViewModel();
+  console.log('✅ LobbyScreen: ViewModel initialized successfully');
+
+  const { isConnecting, isConnected, joinLobby, leaveLobby, startGame } = viewModel;
+  console.log('🖥️ LobbyScreen: ViewModel destructured, isConnected:', isConnected);
 
   const handleJoinLobby = () => {
     if (!gameId || !playerName) {
@@ -41,6 +51,8 @@ export default function LobbyScreen() {
     leaveLobby();
   };
 
+  console.log('🖥️ LobbyScreen: About to render JSX');
+  
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -183,6 +195,12 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 10,
     lineHeight: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#d32f2f',
+    padding: 20,
+    textAlign: 'center',
   },
 });
 

@@ -10,16 +10,16 @@ import { store } from '@/store/store';
 import AppNavigator from '@/presentation/navigation/AppNavigator';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-console.log('🚀 App.tsx: FILE LOADED');
+console.log('🚀 App.clean.tsx: FILE LOADED');
 
 export default function App() {
-  console.log('🚀 App.tsx: COMPONENT RENDERING');
+  console.log('🚀 App.clean.tsx: COMPONENT RENDERING');
   
   React.useEffect(() => {
-    console.log('✅ App.tsx: Component mounted');
+    console.log('✅ App.clean.tsx: Component mounted');
     
     return () => {
-      console.log('🛑 App.tsx: Component unmounting');
+      console.log('🛑 App.clean.tsx: Component unmounting');
     };
   }, []);
 
@@ -32,3 +32,4 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
