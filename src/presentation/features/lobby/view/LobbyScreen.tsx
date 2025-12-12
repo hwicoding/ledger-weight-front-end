@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/presentation/navigation/types';
 import { useLobbyViewModel } from '@/presentation/features/lobby/viewmodel/LobbyViewModel';
-import { PlayerCard } from '@/presentation/shared/components';
+import { PlayerCard, Toast, LoadingIndicator } from '@/presentation/shared/components';
 import { Player as DomainPlayer, Card as DomainCard } from '@/domain/entities';
 import { Player as StorePlayer } from '@/store/types';
-import { useAppSelector } from '@/store/hooks';
-import { selectCurrentPlayerId } from '@/store/selectors';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectCurrentPlayerId, selectUIError } from '@/store/selectors';
+import { setError } from '@/store/slices/uiSlice';
 
 type LobbyScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -19,8 +20,12 @@ export default function LobbyScreen() {
   console.log('🖥️ LobbyScreen: Component rendering...');
   
   const navigation = useNavigation<LobbyScreenNavigationProp>();
+  const dispatch = useAppDispatch();
   const [gameId, setGameId] = useState('temp-game-001');
   const [playerName, setPlayerName] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('info');
 
   console.log('🖥️ LobbyScreen: State initialized');
 
@@ -33,11 +38,27 @@ export default function LobbyScreen() {
 
   const { isConnecting, isConnected, players, joinLobby, leaveLobby, startGame } = viewModel;
   const currentPlayerId = useAppSelector(selectCurrentPlayerId);
+  const error = useAppSelector(selectUIError);
   console.log('🖥️ LobbyScreen: ViewModel destructured, isConnected:', isConnected);
+
+  // 에러 메시지 표시
+  useEffect(() => {
+    if (error) {
+      setToastMessage(error);
+      setToastType('error');
+      setToastVisible(true);
+      // 에러 표시 후 Redux에서 제거
+      setTimeout(() => {
+        dispatch(setError(null));
+      }, 100);
+    }
+  }, [error, dispatch]);
 
   const handleJoinLobby = () => {
     if (!gameId || !playerName) {
-      alert('게임 ID와 플레이어 이름을 입력해주세요.');
+      setToastMessage('게임 ID와 플레이어 이름을 입력해주세요.');
+      setToastType('warning');
+      setToastVisible(true);
       return;
     }
     joinLobby(gameId, playerName);
@@ -45,7 +66,9 @@ export default function LobbyScreen() {
 
   const handleStartGame = () => {
     if (!isConnected) {
-      alert('먼저 로비에 참가해주세요.');
+      setToastMessage('먼저 로비에 참가해주세요.');
+      setToastType('warning');
+      setToastVisible(true);
       return;
     }
     startGame();
@@ -55,12 +78,16 @@ export default function LobbyScreen() {
 
   const handleLeaveLobby = () => {
     leaveLobby();
+    setToastMessage('로비를 나갔습니다.');
+    setToastType('info');
+    setToastVisible(true);
   };
 
   console.log('🖥️ LobbyScreen: About to render JSX');
   
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.wrapper}>
+      <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>장부의 무게</Text>
         <Text style={styles.subtitle}>로비 화면</Text>
@@ -89,11 +116,16 @@ export default function LobbyScreen() {
 
         <View style={styles.buttonContainer}>
           {!isConnected ? (
-            <Button
-              title={isConnecting ? '연결 중...' : '로비 참가'}
-              onPress={handleJoinLobby}
-              disabled={isConnecting}
-            />
+            <View>
+              {isConnecting && (
+                <LoadingIndicator message="연결 중..." size="small" />
+              )}
+              <Button
+                title={isConnecting ? '연결 중...' : '로비 참가'}
+                onPress={handleJoinLobby}
+                disabled={isConnecting}
+              />
+            </View>
           ) : (
             <Button title="로비 나가기" onPress={handleLeaveLobby} />
           )}
@@ -157,11 +189,23 @@ export default function LobbyScreen() {
           </View>
         )}
       </View>
-    </ScrollView>
+      </ScrollView>
+      
+      {/* Toast 알림 */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

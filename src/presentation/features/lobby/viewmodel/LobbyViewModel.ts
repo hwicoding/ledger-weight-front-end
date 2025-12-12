@@ -11,6 +11,7 @@ import { setError } from '@/store/slices/uiSlice';
 import { LobbyService } from '@/application/services';
 import { JoinLobbyUseCase } from '@/domain/usecases';
 import WebSocketService from '@/infrastructure/websocket/WebSocketService';
+import { buildLobbyWebSocketUrl } from '@/config/websocket';
 
 export const useLobbyViewModel = () => {
   const dispatch = useAppDispatch();
@@ -124,8 +125,8 @@ export const useLobbyViewModel = () => {
       console.log(`🎮 LobbyViewModel: Joining lobby - gameId: ${gameId}, player: ${playerName}`);
       setIsConnecting(true);
       
-      // WebSocket URL 구성 (실제 백엔드 URL로 변경 필요)
-      const wsUrl = `ws://localhost:8080/lobby/${gameId}?player=${encodeURIComponent(playerName)}`;
+      // WebSocket URL 구성 (설정 파일에서 가져옴)
+      const wsUrl = buildLobbyWebSocketUrl(gameId, playerName);
       console.log(`🔌 LobbyViewModel: Connecting to ${wsUrl}`);
       
       await joinLobbyUseCase.execute(wsUrl);

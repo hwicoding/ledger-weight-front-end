@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -6,9 +6,12 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/presentation/navigation/types';
 import { useGameViewModel } from '@/presentation/features/game/viewmodel/GameViewModel';
 import { GameBoard, HandCards } from '@/presentation/features/game/components';
-import { TimerDisplay, CardComponent, EventLog } from '@/presentation/shared/components';
+import { TimerDisplay, CardComponent, EventLog, Toast, LoadingIndicator } from '@/presentation/shared/components';
 import { Card as DomainCard, GameState as DomainGameState, Player as DomainPlayer, TurnState as DomainTurnState } from '@/domain/entities';
 import { Card as StoreCard, GameState as StoreGameState } from '@/store/types';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectUIError, selectGameLoading } from '@/store/selectors';
+import { setError } from '@/store/slices/uiSlice';
 
 type GameScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -19,7 +22,12 @@ type GameScreenRouteProp = RouteProp<RootStackParamList, 'Game'>;
 export default function GameScreen() {
   const navigation = useNavigation<GameScreenNavigationProp>();
   const route = useRoute<GameScreenRouteProp>();
+  const dispatch = useAppDispatch();
   const { gameId } = route.params;
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('info');
+  const [isUsingCard, setIsUsingCard] = useState(false);
 
   // ViewModel 사용
   const {
@@ -39,6 +47,22 @@ export default function GameScreen() {
     selectTarget,
     clearSelection,
   } = useGameViewModel();
+
+  const error = useAppSelector(selectUIError);
+  const isLoading = useAppSelector(selectGameLoading);
+
+  // 에러 메시지 표시
+  useEffect(() => {
+    if (error) {
+      setToastMessage(error);
+      setToastType('error');
+      setToastVisible(true);
+      // 에러 표시 후 Redux에서 제거
+      setTimeout(() => {
+        dispatch(setError(null));
+      }, 100);
+    }
+  }, [error, dispatch]);
 
   const handleBackToLobby = () => {
     navigation.navigate('Lobby');
@@ -97,10 +121,20 @@ export default function GameScreen() {
     selectCard(card.id);
   };
 
-  const handleUseCard = () => {
+  const handleUseCard = async () => {
     if (selectedCard) {
-      // selectedTarget이 있으면 함께 전달
-      useCard(selectedCard.id, selectedTarget || undefined);
+      setIsUsingCard(true);
+      try {
+        // selectedTarget이 있으면 함께 전달
+        await useCard(selectedCard.id, selectedTarget || undefined);
+        setToastMessage('카드를 사용했습니다.');
+        setToastType('success');
+        setToastVisible(true);
+      } catch (error) {
+        // 에러는 Redux를 통해 처리됨
+      } finally {
+        setIsUsingCard(false);
+      }
     }
   };
 
@@ -144,7 +178,8 @@ export default function GameScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.wrapper}>
+      <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>게임 화면</Text>
         <Text style={styles.subtitle}>Game ID: {gameId}</Text>
@@ -153,6 +188,9 @@ export default function GameScreen() {
       {/* 게임 상태 및 타이머 */}
       {gameState && (
         <View style={styles.gameStatusSection}>
+          {isLoading && (
+            <LoadingIndicator message="게임 상태 업데이트 중..." size="small" />
+          )}
           <View style={styles.statusInfo}>
             <Text style={styles.phaseText}>
               Phase: {gameState.phase === 'lobby' ? '로비' : gameState.phase === 'playing' ? '게임 중' : '종료'}
@@ -219,19 +257,23 @@ export default function GameScreen() {
           )}
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton, 
-                styles.useButton,
-                isTargeting && !selectedTarget && styles.disabledButton
-              ]}
-              onPress={handleUseCard}
-              disabled={isTargeting && !selectedTarget}
-            >
-              <Text style={styles.buttonText}>
-                {isTargeting && !selectedTarget ? '타겟 선택 필요' : '카드 사용'}
-              </Text>
-            </TouchableOpacity>
+            {isUsingCard ? (
+              <LoadingIndicator message="카드 사용 중..." size="small" />
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.actionButton, 
+                  styles.useButton,
+                  isTargeting && !selectedTarget && styles.disabledButton
+                ]}
+                onPress={handleUseCard}
+                disabled={isTargeting && !selectedTarget}
+              >
+                <Text style={styles.buttonText}>
+                  {isTargeting && !selectedTarget ? '타겟 선택 필요' : '카드 사용'}
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
               onPress={clearSelection}
@@ -274,7 +316,7 @@ export default function GameScreen() {
       </Modal>
 
       {/* 게임 이벤트 로그 */}
-      {events.length > 0 && (
+      {events && events.length > 0 && (
         <View style={styles.eventLogSection}>
           <Text style={styles.sectionTitle}>이벤트 로그</Text>
           <EventLog events={events} maxHeight={200} />
@@ -296,11 +338,23 @@ export default function GameScreen() {
           <Text style={styles.buttonText}>로비로 돌아가기</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+      
+      {/* Toast 알림 */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

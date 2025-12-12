@@ -5,6 +5,8 @@
 - [프로젝트 개요](./ledger-weight-front-end_OVERVIEW.md) - 프로젝트 전체 개요 및 규격
 - [개발 계획서](./DEVELOPMENT_PLAN.md) - 개발 일정 및 계획
 - [작업 목록 (TODO)](./TODO.md) - 현재 작업해야 할 내용
+- [다음 작업 요약](./NEXT_WORK_SUMMARY.md) - 우선순위별 작업 요약
+- [백엔드 테스트 전 필수 작업](./BEFORE_BACKEND_TEST.md) - 백엔드 연동 전 준비사항
 - [빠른 시작 가이드](./getting-started/QUICK_START.md) - 프로젝트 빠른 시작
 - [프로젝트 초기화](./getting-started/PROJECT_INITIALIZATION.md) - 프로젝트 초기 설정
 - [Wi-Fi 연결 가이드](./getting-started/WIFI_CONNECTION_GUIDE.md) - 개발 환경 연결
