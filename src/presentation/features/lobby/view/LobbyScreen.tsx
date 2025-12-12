@@ -4,6 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/presentation/navigation/types';
 import { useLobbyViewModel } from '@/presentation/features/lobby/viewmodel/LobbyViewModel';
+import { PlayerCard } from '@/presentation/shared/components';
+import { Player as DomainPlayer, Card as DomainCard } from '@/domain/entities';
+import { Player as StorePlayer } from '@/store/types';
+import { useAppSelector } from '@/store/hooks';
+import { selectCurrentPlayerId } from '@/store/selectors';
 
 type LobbyScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -26,7 +31,8 @@ export default function LobbyScreen() {
   const viewModel = useLobbyViewModel();
   console.log('✅ LobbyScreen: ViewModel initialized successfully');
 
-  const { isConnecting, isConnected, joinLobby, leaveLobby, startGame } = viewModel;
+  const { isConnecting, isConnected, players, joinLobby, leaveLobby, startGame } = viewModel;
+  const currentPlayerId = useAppSelector(selectCurrentPlayerId);
   console.log('🖥️ LobbyScreen: ViewModel destructured, isConnected:', isConnected);
 
   const handleJoinLobby = () => {
@@ -114,12 +120,42 @@ export default function LobbyScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>플레이어 목록</Text>
-        <Text style={styles.description}>
-          플레이어 목록이 여기에 표시됩니다.
-        </Text>
-        <Text style={styles.description}>
-          (WebSocket 연결 후 서버에서 받아온 데이터로 업데이트됩니다)
-        </Text>
+        {players.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {isConnected 
+                ? '아직 참가한 플레이어가 없습니다.'
+                : '로비에 참가하면 플레이어 목록이 표시됩니다.'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.playersList}>
+            {players.map((player: StorePlayer) => {
+              // Store 타입을 Domain Entity로 변환
+              const domainPlayer = new DomainPlayer(
+                player.id,
+                player.role,
+                player.hp,
+                player.influence,
+                player.treasures,
+                player.hand.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)),
+                player.tableCards?.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)) || []
+              );
+
+              const isCurrentPlayer = player.id === currentPlayerId;
+
+              return (
+                <View key={player.id} style={styles.playerItem}>
+                  <PlayerCard
+                    player={domainPlayer}
+                    isCurrentPlayer={isCurrentPlayer}
+                    size="small"
+                  />
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -201,6 +237,21 @@ const styles = StyleSheet.create({
     color: '#d32f2f',
     padding: 20,
     textAlign: 'center',
+  },
+  emptyState: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  playersList: {
+    marginTop: 10,
+  },
+  playerItem: {
+    marginBottom: 12,
   },
 });
 

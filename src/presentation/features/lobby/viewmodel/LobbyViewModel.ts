@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectPlayers } from '@/store/selectors';
 import { setCurrentPlayerId } from '@/store/slices/playerSlice';
 import { setError } from '@/store/slices/uiSlice';
 import { LobbyService } from '@/application/services';
@@ -15,6 +16,9 @@ export const useLobbyViewModel = () => {
   const dispatch = useAppDispatch();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  
+  // Redux Store에서 플레이어 목록 가져오기
+  const players = useAppSelector(selectPlayers);
 
   // WebSocket 및 서비스 초기화
   // useMemo를 사용하여 매 렌더링마다 재생성되지 않도록 함
@@ -170,6 +174,7 @@ export const useLobbyViewModel = () => {
     // 상태
     isConnecting,
     isConnected,
+    players,
     
     // 액션
     joinLobby: handleJoinLobby,
