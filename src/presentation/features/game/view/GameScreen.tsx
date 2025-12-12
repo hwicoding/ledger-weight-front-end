@@ -6,7 +6,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/presentation/navigation/types';
 import { useGameViewModel } from '@/presentation/features/game/viewmodel/GameViewModel';
 import { GameBoard, HandCards } from '@/presentation/features/game/components';
-import { TimerDisplay, CardComponent } from '@/presentation/shared/components';
+import { TimerDisplay, CardComponent, EventLog } from '@/presentation/shared/components';
 import { Card as DomainCard, GameState as DomainGameState, Player as DomainPlayer, TurnState as DomainTurnState } from '@/domain/entities';
 import { Card as StoreCard, GameState as StoreGameState } from '@/store/types';
 
@@ -31,6 +31,7 @@ export default function GameScreen() {
     selectedCard,
     selectedTarget,
     isTargeting,
+    events,
     useCard,
     endTurn,
     respondAttack,
@@ -272,6 +273,14 @@ export default function GameScreen() {
         </View>
       </Modal>
 
+      {/* 게임 이벤트 로그 */}
+      {events.length > 0 && (
+        <View style={styles.eventLogSection}>
+          <Text style={styles.sectionTitle}>이벤트 로그</Text>
+          <EventLog events={events} maxHeight={200} />
+        </View>
+      )}
+
       {/* 액션 버튼 */}
       <View style={styles.actionSection}>
         <TouchableOpacity
@@ -414,6 +423,13 @@ const styles = StyleSheet.create({
     color: '#e65100',
     textAlign: 'center',
     fontWeight: '600',
+  },
+  eventLogSection: {
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginHorizontal: 10,
+    borderRadius: 8,
+    padding: 16,
   },
   actionSection: {
     padding: 20,

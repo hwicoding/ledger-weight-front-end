@@ -11,6 +11,7 @@ import {
   selectTurnPlayer,
   selectTurnState,
   selectPlayers,
+  selectGameEvents,
 } from '@/store/selectors';
 import {
   setGameState,
@@ -34,6 +35,7 @@ export const useGameViewModel = () => {
   const turnPlayer = useAppSelector(selectTurnPlayer);
   const turnState = useAppSelector(selectTurnState);
   const players = useAppSelector(selectPlayers);
+  const events = useAppSelector(selectGameEvents);
   const selectedCard = useAppSelector(state => state.player.selectedCard);
   const selectedTarget = useAppSelector(state => state.player.selectedTarget);
   const isTargeting = useAppSelector(state => state.player.isTargeting);
@@ -215,6 +217,7 @@ export const useGameViewModel = () => {
     turnPlayer,
     turnState,
     players,
+    events,
     selectedCard,
     selectedTarget,
     isTargeting,
