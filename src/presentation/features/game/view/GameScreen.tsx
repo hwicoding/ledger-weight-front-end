@@ -29,10 +29,13 @@ export default function GameScreen() {
     turnState,
     players,
     selectedCard,
+    selectedTarget,
+    isTargeting,
     useCard,
     endTurn,
     respondAttack,
     selectCard,
+    selectTarget,
     clearSelection,
   } = useGameViewModel();
 
@@ -95,8 +98,40 @@ export default function GameScreen() {
 
   const handleUseCard = () => {
     if (selectedCard) {
-      useCard(selectedCard.id);
+      // selectedTarget이 있으면 함께 전달
+      useCard(selectedCard.id, selectedTarget || undefined);
     }
+  };
+
+  // 타겟팅 가능 여부 확인 함수
+  const canTargetPlayer = (playerId: string): boolean => {
+    if (!gameState || !currentPlayer) return false;
+    
+    const targetPlayer = gameState.players.find(p => p.id === playerId);
+    if (!targetPlayer) return false;
+
+    // Domain Entity로 변환하여 canTarget 확인
+    const currentPlayerEntity = new DomainPlayer(
+      currentPlayer.id,
+      currentPlayer.role,
+      currentPlayer.hp,
+      currentPlayer.influence,
+      currentPlayer.treasures,
+      currentPlayer.hand.map(c => convertStoreCardToDomain(c)),
+      currentPlayer.tableCards?.map(c => convertStoreCardToDomain(c)) || []
+    );
+
+    const targetPlayerEntity = new DomainPlayer(
+      targetPlayer.id,
+      targetPlayer.role,
+      targetPlayer.hp,
+      targetPlayer.influence,
+      targetPlayer.treasures,
+      targetPlayer.hand.map(c => convertStoreCardToDomain(c)),
+      targetPlayer.tableCards?.map(c => convertStoreCardToDomain(c)) || []
+    );
+
+    return currentPlayerEntity.canTarget(targetPlayerEntity);
   };
 
   const handleRespondEvade = () => {
@@ -139,6 +174,10 @@ export default function GameScreen() {
             gameState={convertStoreGameStateToDomain(gameState)}
             currentPlayerId={currentPlayer?.id || null}
             layout="table"
+            isTargeting={isTargeting}
+            selectedTarget={selectedTarget}
+            onTargetSelect={selectTarget}
+            canTargetPlayer={canTargetPlayer}
           />
         </View>
       )}
@@ -166,12 +205,31 @@ export default function GameScreen() {
               <Text style={styles.cardDescription}>{selectedCard.description}</Text>
             )}
           </View>
+          
+          {/* 타겟팅 모드 안내 */}
+          {isTargeting && (
+            <View style={styles.targetingInfo}>
+              <Text style={styles.targetingInfoText}>
+                {selectedTarget 
+                  ? `타겟 선택됨: ${gameState?.players.find(p => p.id === selectedTarget)?.role || selectedTarget}`
+                  : '플레이어를 선택하세요 (영향력 범위 내)'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.useButton]}
+              style={[
+                styles.actionButton, 
+                styles.useButton,
+                isTargeting && !selectedTarget && styles.disabledButton
+              ]}
               onPress={handleUseCard}
+              disabled={isTargeting && !selectedTarget}
             >
-              <Text style={styles.buttonText}>카드 사용</Text>
+              <Text style={styles.buttonText}>
+                {isTargeting && !selectedTarget ? '타겟 선택 필요' : '카드 사용'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
@@ -337,6 +395,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    backgroundColor: '#bdbdbd',
+    opacity: 0.6,
+  },
+  targetingInfo: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#fff3e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff9800',
+  },
+  targetingInfoText: {
+    fontSize: 14,
+    color: '#e65100',
+    textAlign: 'center',
     fontWeight: '600',
   },
   actionSection: {

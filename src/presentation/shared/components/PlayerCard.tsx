@@ -13,6 +13,8 @@ interface PlayerCardProps {
   isCurrentTurn?: boolean;
   isCurrentPlayer?: boolean;
   size?: 'small' | 'medium' | 'large';
+  isSelected?: boolean;
+  isTargetable?: boolean;
 }
 
 /**
@@ -56,6 +58,8 @@ export default function PlayerCard({
   isCurrentTurn = false,
   isCurrentPlayer = false,
   size = 'medium',
+  isSelected = false,
+  isTargetable = false,
 }: PlayerCardProps) {
   const roleColor = getRoleColor(player.role);
   const roleIcon = getRoleIcon(player.role);
@@ -72,9 +76,10 @@ export default function PlayerCard({
         styles.container,
         {
           padding: cardSize.padding,
-          borderColor: isCurrentTurn ? '#007AFF' : roleColor,
-          borderWidth: isCurrentTurn ? 3 : 2,
-          backgroundColor: isCurrentPlayer ? '#e3f2fd' : '#fff',
+          borderColor: isSelected ? '#4caf50' : isCurrentTurn ? '#007AFF' : isTargetable ? '#ff9800' : roleColor,
+          borderWidth: isSelected ? 4 : isCurrentTurn ? 3 : isTargetable ? 3 : 2,
+          backgroundColor: isSelected ? '#e8f5e9' : isCurrentPlayer ? '#e3f2fd' : isTargetable ? '#fff3e0' : '#fff',
+          opacity: isTargetable ? 1 : isSelected ? 1 : 1,
         },
       ]}
     >

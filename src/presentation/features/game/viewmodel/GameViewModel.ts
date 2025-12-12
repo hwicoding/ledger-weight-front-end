@@ -18,11 +18,11 @@ import {
   addEvent,
   setError,
 } from '@/store/slices/gameSlice';
-import { selectCard, clearSelection } from '@/store/slices/playerSlice';
+import { selectCard, selectTarget, setTargetingMode, clearSelection } from '@/store/slices/playerSlice';
 import { GameService } from '@/application/services';
 import { UseCardUseCase, EndTurnUseCase, RespondAttackUseCase } from '@/domain/usecases';
 import { IWebSocketRepository } from '@/domain/repositories';
-import { GameState } from '@/domain/entities';
+import { GameState, Player as DomainPlayer, Card as DomainCard } from '@/domain/entities';
 import WebSocketService from '@/infrastructure/websocket/WebSocketService';
 
 export const useGameViewModel = () => {
@@ -121,13 +121,15 @@ export const useGameViewModel = () => {
   // 카드 사용
   const handleUseCard = useCallback(async (cardId: string, targetId?: string) => {
     try {
-      await useCardUseCase.execute(cardId, targetId);
+      // selectedTarget이 있으면 사용, 없으면 전달받은 targetId 사용
+      const finalTargetId = selectedTarget || targetId;
+      await useCardUseCase.execute(cardId, finalTargetId);
       dispatch(clearSelection());
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '카드 사용 실패';
       dispatch(setError(errorMessage));
     }
-  }, [useCardUseCase, dispatch]);
+  }, [useCardUseCase, selectedTarget, dispatch]);
 
   // 턴 종료
   const handleEndTurn = useCallback(async () => {
@@ -159,6 +161,50 @@ export const useGameViewModel = () => {
     const card = player.hand.find(c => c.id === cardId);
     if (card) {
       dispatch(selectCard(card));
+      
+      // 카드가 타겟이 필요한지 확인 (임시: 모든 카드가 타겟 필요로 가정)
+      // 실제로는 카드 타입이나 설명을 보고 판단해야 함
+      const needsTarget = true; // TODO: 카드 타입에 따라 결정
+      if (needsTarget) {
+        dispatch(setTargetingMode(true));
+      }
+    }
+  }, [gameState, currentPlayer, dispatch]);
+
+  // 타겟 선택
+  const handleSelectTarget = useCallback((targetId: string) => {
+    if (!gameState || !currentPlayer) return;
+    
+    // 타겟 플레이어 찾기
+    const targetPlayerStore = gameState.players.find(p => p.id === targetId);
+    if (!targetPlayerStore) return;
+
+    // Store 타입을 Domain Entity로 변환
+    const currentPlayerEntity = new DomainPlayer(
+      currentPlayer.id,
+      currentPlayer.role,
+      currentPlayer.hp,
+      currentPlayer.influence,
+      currentPlayer.treasures,
+      currentPlayer.hand.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)),
+      currentPlayer.tableCards?.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)) || []
+    );
+
+    const targetPlayerEntity = new DomainPlayer(
+      targetPlayerStore.id,
+      targetPlayerStore.role,
+      targetPlayerStore.hp,
+      targetPlayerStore.influence,
+      targetPlayerStore.treasures,
+      targetPlayerStore.hand.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)),
+      targetPlayerStore.tableCards?.map(c => new DomainCard(c.id, c.name, c.suit, c.rank, c.description)) || []
+    );
+
+    // 타겟팅 가능 여부 확인
+    if (currentPlayerEntity.canTarget(targetPlayerEntity)) {
+      dispatch(selectTarget(targetId));
+    } else {
+      dispatch(setError('영향력 범위를 벗어난 플레이어입니다.'));
     }
   }, [gameState, currentPlayer, dispatch]);
 
@@ -178,6 +224,7 @@ export const useGameViewModel = () => {
     endTurn: handleEndTurn,
     respondAttack: handleRespondAttack,
     selectCard: handleSelectCard,
+    selectTarget: handleSelectTarget,
     clearSelection: () => dispatch(clearSelection()),
   };
 };
