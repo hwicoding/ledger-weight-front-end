@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectPlayers } from '@/store/selectors';
+import { selectPlayers, selectGameState } from '@/store/selectors';
 import { setCurrentPlayerId } from '@/store/slices/playerSlice';
 import { setError } from '@/store/slices/uiSlice';
 import { setGameState } from '@/store/slices/gameSlice';
@@ -13,9 +13,9 @@ import { LobbyService } from '@/application/services';
 import { JoinLobbyUseCase } from '@/domain/usecases';
 import WebSocketService from '@/infrastructure/websocket/WebSocketService';
 import { buildLobbyWebSocketUrl } from '@/config/websocket';
-import { GameStateUpdateMessage } from '@/infrastructure/websocket/types';
+import { GameStateUpdateMessage, ActionResponseMessage, ErrorMessage } from '@/infrastructure/websocket/types';
 
-export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
+export const useLobbyViewModel = (onError?: (errorMessage: string) => void, onGameStart?: () => void) => {
   const dispatch = useAppDispatch();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -25,8 +25,13 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
   // useEffect 대신 직접 업데이트 (렌더링 중에 안전하게 업데이트 가능)
   onErrorRef.current = onError;
   
-  // Redux Store에서 플레이어 목록 가져오기
+  // onGameStart 콜백을 useRef로 감싸서 안정적인 참조 유지
+  const onGameStartRef = useRef(onGameStart);
+  onGameStartRef.current = onGameStart;
+  
+  // Redux Store에서 플레이어 목록 및 게임 상태 가져오기
   const players = useAppSelector(selectPlayers);
+  const gameState = useAppSelector(selectGameState);
 
   // WebSocket 및 서비스 초기화
   // useMemo를 사용하여 매 렌더링마다 재생성되지 않도록 함
@@ -199,8 +204,42 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
       }));
       
       console.log('✅ LobbyViewModel: 게임 상태 Redux store에 저장 완료', {
-        playersCount: message.players?.length || 0
+        playersCount: message.players?.length || 0,
+        phase: message.phase
       });
+      
+      // phase가 'playing'이 되면 게임 시작 콜백 호출
+      if (message.phase === 'playing' && onGameStartRef.current) {
+        console.log('🎮 LobbyViewModel: 게임 시작됨 (phase: playing), 게임 화면으로 이동');
+        onGameStartRef.current();
+      }
+    };
+
+    const handleActionResponse = (message: ActionResponseMessage) => {
+      console.log('🔄 LobbyViewModel: ACTION_RESPONSE 수신', message);
+      
+      if (message.data.success) {
+        console.log('✅ LobbyViewModel: 게임 시작 성공', message.data.message);
+        // 성공 메시지는 GAME_STATE_UPDATE에서 phase가 'playing'이 되면 처리됨
+      } else {
+        console.error('❌ LobbyViewModel: 게임 시작 실패', message.data.message);
+        const errorMessage = message.data.message || '게임 시작 실패';
+        if (onErrorRef.current) {
+          onErrorRef.current(errorMessage);
+        } else {
+          dispatch(setError(errorMessage));
+        }
+      }
+    };
+
+    const handleErrorMessage = (message: ErrorMessage) => {
+      console.error('❌ LobbyViewModel: ERROR 메시지 수신', message);
+      const errorMessage = message.message || '알 수 없는 오류가 발생했습니다';
+      if (onErrorRef.current) {
+        onErrorRef.current(errorMessage);
+      } else {
+        dispatch(setError(errorMessage));
+      }
     };
 
     try {
@@ -212,6 +251,16 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
       // GAME_STATE_UPDATE 메시지 처리
       websocketRepository.onGameStateUpdate(handleGameStateUpdate);
 
+      // ACTION_RESPONSE 메시지 처리
+      if ('onActionResponse' in websocketRepository) {
+        (websocketRepository as any).onActionResponse(handleActionResponse);
+      }
+
+      // ERROR 메시지 처리 (서버에서 전송하는 ERROR 타입)
+      if ('onErrorMessage' in websocketRepository) {
+        (websocketRepository as any).onErrorMessage(handleErrorMessage);
+      }
+
       websocketRepository.onDisconnect(handleDisconnect);
       websocketRepository.onError(handleError);
 
@@ -221,10 +270,14 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
           if ('offConnectionEstablished' in websocketRepository) {
             (websocketRepository as any).offConnectionEstablished?.(handleConnectionEstablished);
           }
+          if ('offActionResponse' in websocketRepository) {
+            (websocketRepository as any).offActionResponse?.(handleActionResponse);
+          }
+          if ('offErrorMessage' in websocketRepository) {
+            (websocketRepository as any).offErrorMessage?.(handleErrorMessage);
+          }
           // onGameStateUpdate는 배열에 push하므로 필터링으로 제거할 수 없음
           // 하지만 WebSocketRepository가 싱글톤이므로 cleanup은 선택사항
-          // WebSocketRepository에 offGameStateUpdate, offDisconnect, offError가 있다면 사용
-          // 현재는 없으므로 주석 처리
           console.log('🔄 LobbyViewModel: WebSocket 이벤트 리스너 cleanup');
         } catch (error) {
           console.error('❌ LobbyViewModel: Error cleaning up event listeners', error);
@@ -237,7 +290,16 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
   }, [websocketRepository]); // onError는 useRef로 관리하므로 의존성에서 제외
 
   // 로비 참가
-  const handleJoinLobby = useCallback(async (gameId: string, playerName: string) => {
+  const handleJoinLobby = useCallback(async (
+    gameId: string, 
+    playerName: string,
+    options?: {
+      aiPlayerCount?: number;
+      aiDifficulty?: 'easy' | 'medium' | 'hard';
+      minPlayers?: number;
+      maxPlayers?: number;
+    }
+  ) => {
     if (!joinLobbyUseCase) {
       console.error('❌ LobbyViewModel: Cannot join lobby - useCase is null');
       const errorMessage = '서비스 초기화 실패';
@@ -250,7 +312,7 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
     }
     
     try {
-      console.log(`🎮 LobbyViewModel: Joining lobby - gameId: ${gameId}, player: ${playerName}`);
+      console.log(`🎮 LobbyViewModel: Joining lobby - gameId: ${gameId}, player: ${playerName}`, options);
       setIsConnecting(prev => {
         if (!prev) {
           console.log('🔄 LobbyViewModel: isConnecting 변경: false -> true');
@@ -259,14 +321,36 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
         return prev;
       });
       
-      // WebSocket URL 구성 (설정 파일에서 가져옴)
-      const wsUrl = buildLobbyWebSocketUrl(gameId, playerName);
+      // WebSocket URL 구성 (설정 파일에서 가져옴, AI 플레이어 옵션 포함)
+      const wsUrl = buildLobbyWebSocketUrl(gameId, playerName, options);
       console.log(`🔌 LobbyViewModel: Connecting to ${wsUrl}`);
       
       await joinLobbyUseCase.execute(wsUrl);
       console.log('✅ LobbyViewModel: WebSocket 연결 완료');
       // CONNECTION_ESTABLISHED 메시지에서 플레이어 ID를 받을 때까지 대기
       // 플레이어 ID는 onConnectionEstablished 핸들러에서 저장됨
+      
+      // AI 플레이어가 있으면 연결 후 별도 메시지로 추가 요청
+      // 백엔드가 ADD_AI_PLAYER 메시지를 지원하면 사용, 아니면 URL 파라미터로만 전송됨
+      if (options?.aiPlayerCount && options.aiPlayerCount > 0 && lobbyService) {
+        console.log(`🤖 LobbyViewModel: AI 플레이어 ${options.aiPlayerCount}명 추가 요청 (난이도: ${options.aiDifficulty})`);
+        try {
+          // 연결이 완료될 때까지 약간 대기 (WebSocket 연결이 완전히 설정된 후)
+          setTimeout(async () => {
+            if (websocketRepository.isConnected()) {
+              await lobbyService.addAiPlayer(
+                options.aiPlayerCount!,
+                options.aiDifficulty || 'medium',
+                gameId
+              );
+              console.log(`✅ LobbyViewModel: AI 플레이어 추가 요청 전송 완료`);
+            }
+          }, 500); // 500ms 대기 (CONNECTION_ESTABLISHED 메시지 수신 후)
+        } catch (error) {
+          console.error('❌ LobbyViewModel: AI 플레이어 추가 요청 실패', error);
+          // 에러는 조용히 처리 (URL 파라미터로 대체 가능)
+        }
+      }
     } catch (error) {
       console.error('❌ LobbyViewModel: Failed to join lobby', error);
       const errorMessage = error instanceof Error ? error.message : '로비 참가 실패';
@@ -338,6 +422,39 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyService]); // onError는 useRef로 관리하므로 의존성에서 제외
 
+  // AI 플레이어 추가 (로비 연결 후 별도로 호출 가능)
+  const handleAddAiPlayer = useCallback(async (
+    count: number,
+    difficulty: 'easy' | 'medium' | 'hard' = 'medium',
+    gameId?: string
+  ) => {
+    if (!lobbyService) {
+      console.error('❌ LobbyViewModel: Cannot add AI player - service is null');
+      const errorMessage = '서비스 초기화 실패';
+      if (onErrorRef.current) {
+        onErrorRef.current(errorMessage);
+      } else {
+        dispatch(setError(errorMessage));
+      }
+      return;
+    }
+    
+    try {
+      console.log(`🤖 LobbyViewModel: AI 플레이어 추가 요청 - count: ${count}, difficulty: ${difficulty}`);
+      await lobbyService.addAiPlayer(count, difficulty, gameId);
+      console.log('✅ LobbyViewModel: AI 플레이어 추가 요청 전송 완료');
+    } catch (error) {
+      console.error('❌ LobbyViewModel: AI 플레이어 추가 실패', error);
+      const errorMessage = error instanceof Error ? error.message : 'AI 플레이어 추가 실패';
+      if (onErrorRef.current) {
+        onErrorRef.current(errorMessage);
+      } else {
+        dispatch(setError(errorMessage));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyService]); // onError는 useRef로 관리하므로 의존성에서 제외
+
   // 반환 객체를 useMemo로 메모이제이션하여 무한 렌더링 방지
   // 함수들은 useCallback으로 이미 메모이제이션되어 있으므로 의존성 배열에 포함하지 않음
   // players 배열의 참조 안정성을 확인
@@ -363,8 +480,9 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void) => {
       joinLobby: handleJoinLobby,
       leaveLobby: handleLeaveLobby,
       startGame: handleStartGame,
+      addAiPlayer: handleAddAiPlayer,
     };
-  }, [isConnecting, isConnected, players]);
+  }, [isConnecting, isConnected, players, handleJoinLobby, handleLeaveLobby, handleStartGame, handleAddAiPlayer]);
   
   return viewModelObject;
 };

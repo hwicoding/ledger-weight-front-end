@@ -5,12 +5,14 @@
 
 import { IWebSocketRepository, GameStateUpdate, PlayerAction } from '@/domain/repositories';
 import { WebSocketClient } from '@/infrastructure/websocket/WebSocketClient';
-import { ConnectionEstablishedMessage } from '@/infrastructure/websocket/types';
+import { ConnectionEstablishedMessage, ActionResponseMessage, ErrorMessage } from '@/infrastructure/websocket/types';
 
 export class WebSocketRepository implements IWebSocketRepository {
   private client: WebSocketClient;
   private gameStateUpdateHandlers: Array<(update: GameStateUpdate) => void> = [];
   private connectionEstablishedHandlers: Array<(message: ConnectionEstablishedMessage) => void> = [];
+  private actionResponseHandlers: Array<(message: ActionResponseMessage) => void> = [];
+  private errorMessageHandlers: Array<(message: ErrorMessage) => void> = [];
   private errorHandlers: Array<(error: Error) => void> = [];
   private disconnectHandlers: Array<() => void> = [];
 
@@ -30,6 +32,21 @@ export class WebSocketRepository implements IWebSocketRepository {
     this.client.onMessage('CONNECTION_ESTABLISHED', (data) => {
       const message = data as ConnectionEstablishedMessage;
       this.connectionEstablishedHandlers.forEach(handler => handler(message));
+    });
+
+    // ACTION_RESPONSE 메시지 처리
+    this.client.onMessage('ACTION_RESPONSE', (data) => {
+      const message = data as ActionResponseMessage;
+      this.actionResponseHandlers.forEach(handler => handler(message));
+    });
+
+    // ERROR 메시지 처리 (서버에서 전송하는 에러 메시지)
+    this.client.onMessage('ERROR', (data) => {
+      const message = data as ErrorMessage;
+      this.errorMessageHandlers.forEach(handler => handler(message));
+      // ERROR 메시지를 일반 에러 핸들러로도 전달
+      const error = new Error(message.message);
+      this.errorHandlers.forEach(handler => handler(error));
     });
 
     this.client.onError((error) => {
@@ -111,6 +128,55 @@ export class WebSocketRepository implements IWebSocketRepository {
    */
   onConnectionEstablished(callback: (message: ConnectionEstablishedMessage) => void): void {
     this.connectionEstablishedHandlers.push(callback);
+  }
+
+  /**
+   * 연결 성공 콜백 제거
+   * @param callback 콜백 함수
+   */
+  offConnectionEstablished(callback: (message: ConnectionEstablishedMessage) => void): void {
+    const index = this.connectionEstablishedHandlers.indexOf(callback);
+    if (index !== -1) {
+      this.connectionEstablishedHandlers.splice(index, 1);
+    }
+  }
+
+  /**
+   * 액션 응답 메시지 수신 콜백 등록
+   * @param callback 콜백 함수
+   */
+  onActionResponse(callback: (message: ActionResponseMessage) => void): void {
+    this.actionResponseHandlers.push(callback);
+  }
+
+  /**
+   * 액션 응답 메시지 수신 콜백 제거
+   * @param callback 콜백 함수
+   */
+  offActionResponse(callback: (message: ActionResponseMessage) => void): void {
+    const index = this.actionResponseHandlers.indexOf(callback);
+    if (index !== -1) {
+      this.actionResponseHandlers.splice(index, 1);
+    }
+  }
+
+  /**
+   * 에러 메시지 수신 콜백 등록 (서버에서 전송하는 ERROR 타입 메시지)
+   * @param callback 콜백 함수
+   */
+  onErrorMessage(callback: (message: ErrorMessage) => void): void {
+    this.errorMessageHandlers.push(callback);
+  }
+
+  /**
+   * 에러 메시지 수신 콜백 제거
+   * @param callback 콜백 함수
+   */
+  offErrorMessage(callback: (message: ErrorMessage) => void): void {
+    const index = this.errorMessageHandlers.indexOf(callback);
+    if (index !== -1) {
+      this.errorMessageHandlers.splice(index, 1);
+    }
   }
 
   /**

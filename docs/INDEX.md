@@ -57,6 +57,7 @@
 - [백엔드 연동 테스트 가이드](./BACKEND_TEST_GUIDE.md) - 백엔드 연동 테스트 방법 및 체크리스트
 - [백엔드 공조 문서](./BACKEND_COORDINATION.md) - 백엔드 담당자와의 협의 사항
 - [WebSocket 연결 문제 해결 가이드](./WEBSOCKET_CONNECTION_TROUBLESHOOTING.md) - WebSocket 연결 문제 진단 및 해결 방법
+- [AI 플레이어 추가 기능 구현 제안](./AI_PLAYER_IMPLEMENTATION_PROPOSAL.md) - AI 플레이어 추가 기능 백엔드 프로토콜 제안
 
 ---
 

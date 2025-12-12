@@ -70,12 +70,41 @@ export const WEBSOCKET_CONFIG = {
  * 로비 WebSocket URL 생성
  * @param gameId 게임 ID
  * @param playerName 플레이어 이름
+ * @param options 옵션 (AI 플레이어 수, 난이도 등)
  * @returns WebSocket URL
  */
-export const buildLobbyWebSocketUrl = (gameId: string, playerName: string): string => {
+export const buildLobbyWebSocketUrl = (
+  gameId: string, 
+  playerName: string,
+  options?: {
+    aiPlayerCount?: number;
+    aiDifficulty?: 'easy' | 'medium' | 'hard';
+    minPlayers?: number;
+    maxPlayers?: number;
+  }
+): string => {
   const baseUrl = WEBSOCKET_CONFIG.baseUrl;
   const encodedPlayerName = encodeURIComponent(playerName);
-  return `${baseUrl}/lobby/${gameId}?player=${encodedPlayerName}`;
+  const params = new URLSearchParams();
+  params.append('player', playerName);
+  
+  // AI 플레이어 옵션이 있으면 쿼리 파라미터에 추가
+  if (options?.aiPlayerCount !== undefined && options.aiPlayerCount > 0) {
+    params.append('ai_count', options.aiPlayerCount.toString());
+    if (options.aiDifficulty) {
+      params.append('ai_difficulty', options.aiDifficulty);
+    }
+  }
+  
+  // 최소/최대 플레이어 수 (필요시)
+  if (options?.minPlayers !== undefined) {
+    params.append('min_players', options.minPlayers.toString());
+  }
+  if (options?.maxPlayers !== undefined) {
+    params.append('max_players', options.maxPlayers.toString());
+  }
+  
+  return `${baseUrl}/lobby/${gameId}?${params.toString()}`;
 };
 
 /**

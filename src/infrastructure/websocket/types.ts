@@ -11,7 +11,7 @@ export type ServerMessageType = 'CONNECTION_ESTABLISHED' | 'GAME_STATE_UPDATE' |
 /**
  * 클라이언트에서 서버로 전송하는 메시지 타입
  */
-export type ClientMessageType = 'PLAYER_ACTION' | 'PING';
+export type ClientMessageType = 'PLAYER_ACTION' | 'PING' | 'ADD_AI_PLAYER' | 'REMOVE_AI_PLAYER';
 
 /**
  * 게임 상태 업데이트 메시지 (서버 → 클라이언트)
@@ -107,5 +107,24 @@ export interface ActionResponseMessage {
     message: string;
     game_id?: string;
   };
+}
+
+/**
+ * AI 플레이어 추가 메시지 (클라이언트 → 서버)
+ */
+export interface AddAiPlayerMessage {
+  type: 'ADD_AI_PLAYER';
+  game_id?: string;  // optional, 현재 연결된 게임이면 생략 가능
+  count: number;     // 추가할 AI 플레이어 수 (1-7)
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+/**
+ * AI 플레이어 제거 메시지 (클라이언트 → 서버, 선택사항)
+ */
+export interface RemoveAiPlayerMessage {
+  type: 'REMOVE_AI_PLAYER';
+  game_id?: string;  // optional
+  count: number;     // 제거할 AI 플레이어 수
 }
 

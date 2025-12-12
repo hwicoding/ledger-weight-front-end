@@ -66,7 +66,17 @@ function LobbyScreen() {
     setToastVisible(true);
   }, []);
   
-  const viewModel = useLobbyViewModel(handleError);
+  const gameIdRef = useRef(gameId);
+  useEffect(() => {
+    gameIdRef.current = gameId;
+  }, [gameId]);
+
+  const handleGameStart = useCallback(() => {
+    console.log('🎮 LobbyScreen: 게임 시작됨, 게임 화면으로 이동', { gameId: gameIdRef.current });
+    navigation.navigate('Game', { gameId: gameIdRef.current });
+  }, [navigation]);
+
+  const viewModel = useLobbyViewModel(handleError, handleGameStart);
   const { isConnecting, isConnected, players, joinLobby, leaveLobby, startGame } = viewModel;
   const currentPlayerId = useAppSelector(selectCurrentPlayerId);
   
@@ -112,11 +122,18 @@ function LobbyScreen() {
       setToastVisible(true);
       return;
     }
+    
+    // 최소 플레이어 수 검증 (4명)
+    if (players.length < 4) {
+      setToastMessage(`게임을 시작하려면 최소 4명의 플레이어가 필요합니다. (현재: ${players.length}명)`);
+      setToastType('warning');
+      setToastVisible(true);
+      return;
+    }
+    
     // 게임 시작 요청 (gameId 전달)
     startGame(gameId);
-    // 게임 시작 성공 시 GameScreen으로 이동 (GAME_STATE_UPDATE에서 phase가 'playing'이 되면 이동)
-    // 일단은 임시로 이동
-    navigation.navigate('Game', { gameId });
+    // 게임 시작 성공 시 GameScreen으로 이동은 GAME_STATE_UPDATE에서 phase가 'playing'이 되면 자동으로 처리됨
   };
 
   const handleLeaveLobby = () => {
@@ -139,10 +156,21 @@ function LobbyScreen() {
     setGameId(newGameId);
     setShowCreateRoomModal(false);
     
-    // 방 생성 후 자동으로 참가
+    // 방 생성 후 자동으로 참가 (AI 플레이어 옵션 포함)
     setTimeout(() => {
-      joinLobby(newGameId, playerName);
-      setToastMessage('방이 생성되었습니다.');
+      // AI 플레이어가 있으면 옵션과 함께 참가
+      if (aiPlayerCount > 0) {
+        joinLobby(newGameId, playerName, {
+          aiPlayerCount,
+          aiDifficulty,
+          minPlayers,
+          maxPlayers,
+        });
+        setToastMessage(`방이 생성되었습니다. (AI 플레이어 ${aiPlayerCount}명 추가 예정)`);
+      } else {
+        joinLobby(newGameId, playerName);
+        setToastMessage('방이 생성되었습니다.');
+      }
       setToastType('success');
       setToastVisible(true);
     }, 100);
