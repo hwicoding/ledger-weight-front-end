@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, ScrollView, Modal, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -188,8 +189,12 @@ export default function GameScreen() {
   }, [gameState]);
 
   return (
-    <View style={styles.wrapper}>
-      <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
       <View style={styles.header}>
         <Text style={styles.title}>게임 화면</Text>
         <Text style={styles.subtitle}>Game ID: {gameId}</Text>
@@ -358,17 +363,20 @@ export default function GameScreen() {
         visible={toastVisible}
         onDismiss={() => setToastVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   header: {
     padding: 20,

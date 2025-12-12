@@ -6,7 +6,7 @@
 /**
  * 서버에서 클라이언트로 전송하는 메시지 타입
  */
-export type ServerMessageType = 'GAME_STATE_UPDATE' | 'ERROR' | 'NOTIFICATION';
+export type ServerMessageType = 'CONNECTION_ESTABLISHED' | 'GAME_STATE_UPDATE' | 'ERROR' | 'NOTIFICATION' | 'ACTION_RESPONSE';
 
 /**
  * 클라이언트에서 서버로 전송하는 메시지 타입
@@ -84,5 +84,28 @@ export interface ErrorMessage {
 export interface NotificationMessage {
   type: 'NOTIFICATION';
   message: string;
+}
+
+/**
+ * 연결 성공 메시지 (서버 → 클라이언트)
+ */
+export interface ConnectionEstablishedMessage {
+  type: 'CONNECTION_ESTABLISHED';
+  message: string;
+  player_id: string; // 서버에서 생성한 UUID
+  player_name: string;
+  game_id: string;
+}
+
+/**
+ * 액션 응답 메시지 (서버 → 클라이언트)
+ */
+export interface ActionResponseMessage {
+  type: 'ACTION_RESPONSE';
+  data: {
+    success: boolean;
+    message: string;
+    game_id?: string;
+  };
 }
 

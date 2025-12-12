@@ -54,9 +54,24 @@ export class WebSocketClient {
 
         this.ws.onmessage = (event) => {
           try {
-            const message: WebSocketMessage = JSON.parse(event.data);
-            logger.debug('WebSocketClient', '메시지 수신', { type: message.type, data: message.data });
-            this.handleMessage(message);
+            const rawMessage = JSON.parse(event.data);
+            logger.debug('WebSocketClient', '메시지 수신', { rawMessage });
+            
+            // 백엔드 메시지 형식에 맞게 처리
+            // 백엔드는 { type: "...", ... } 형식으로 직접 전송
+            if (rawMessage.type) {
+              // 메시지 타입이 있으면 해당 타입으로 핸들러 호출
+              // data는 메시지 전체를 전달 (player_id, player_name 등 포함)
+              this.handleMessage({
+                type: rawMessage.type,
+                data: rawMessage,
+              });
+            } else {
+              // 기존 형식 지원 (하위 호환성)
+              const message: WebSocketMessage = rawMessage;
+              logger.debug('WebSocketClient', '메시지 수신', { type: message.type, data: message.data });
+              this.handleMessage(message);
+            }
           } catch (error) {
             logger.error('WebSocketClient', '메시지 파싱 실패', error);
           }
@@ -108,6 +123,26 @@ export class WebSocketClient {
 
     try {
       logger.debug('WebSocketClient', '메시지 전송', { type: message.type, data: message.data });
+      this.ws.send(JSON.stringify(message));
+    } catch (error) {
+      logger.error('WebSocketClient', '메시지 전송 실패', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 직접 메시지 전송 (백엔드 형식에 맞게)
+   * @param message 전송할 메시지 객체
+   */
+  sendRaw(message: Record<string, unknown>): void {
+    if (!this.ws || this.status !== 'connected') {
+      const error = new Error('WebSocket is not connected');
+      logger.error('WebSocketClient', '메시지 전송 실패: 연결되지 않음', error);
+      throw error;
+    }
+
+    try {
+      logger.debug('WebSocketClient', '메시지 전송 (Raw)', message);
       this.ws.send(JSON.stringify(message));
     } catch (error) {
       logger.error('WebSocketClient', '메시지 전송 실패', error);

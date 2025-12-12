@@ -51,6 +51,11 @@
 - [작업 워크플로우 규칙](./WORKFLOW.md) - Git 커밋 및 푸시 규칙
 - [Git 커밋 메시지 한글 깨짐 방지 규칙](./GIT_COMMIT_RULES.md) - 커밋 메시지 작성 가이드
 
+## 🔌 백엔드 연동
+
+- [백엔드 연동 작업 계획](./BACKEND_INTEGRATION_PLAN.md) - 백엔드 연동 작업 계획 및 진행 상황
+- [백엔드 공조 문서](./BACKEND_COORDINATION.md) - 백엔드 담당자와의 협의 사항
+
 ---
 
 ## 🏗️ 아키텍처

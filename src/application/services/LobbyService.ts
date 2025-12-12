@@ -22,11 +22,22 @@ export class LobbyService {
 
   /**
    * 게임 시작 요청
+   * @param gameId 게임 ID (optional, 없으면 현재 연결된 게임 사용)
    * @returns Promise<void>
    */
-  async startGame(): Promise<void> {
-    // 게임 시작 액션 전송
-    // 실제 구현은 백엔드 프로토콜에 따라 다를 수 있음
+  async startGame(gameId?: string): Promise<void> {
+    if (!this.websocketRepository.isConnected()) {
+      throw new Error('WebSocket is not connected');
+    }
+
+    // START_GAME 메시지 전송
+    const message = {
+      type: 'START_GAME',
+      ...(gameId && { game_id: gameId }),
+    };
+
+    // WebSocketRepository의 sendMessage 메서드 사용
+    (this.websocketRepository as any).sendMessage(message);
   }
 
   /**

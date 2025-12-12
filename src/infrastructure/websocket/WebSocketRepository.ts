@@ -5,10 +5,12 @@
 
 import { IWebSocketRepository, GameStateUpdate, PlayerAction } from '@/domain/repositories';
 import { WebSocketClient } from '@/infrastructure/websocket/WebSocketClient';
+import { ConnectionEstablishedMessage } from '@/infrastructure/websocket/types';
 
 export class WebSocketRepository implements IWebSocketRepository {
   private client: WebSocketClient;
   private gameStateUpdateHandlers: Array<(update: GameStateUpdate) => void> = [];
+  private connectionEstablishedHandlers: Array<(message: ConnectionEstablishedMessage) => void> = [];
   private errorHandlers: Array<(error: Error) => void> = [];
   private disconnectHandlers: Array<() => void> = [];
 
@@ -22,6 +24,12 @@ export class WebSocketRepository implements IWebSocketRepository {
         data,
       };
       this.gameStateUpdateHandlers.forEach(handler => handler(update));
+    });
+
+    // CONNECTION_ESTABLISHED 메시지 처리
+    this.client.onMessage('CONNECTION_ESTABLISHED', (data) => {
+      const message = data as ConnectionEstablishedMessage;
+      this.connectionEstablishedHandlers.forEach(handler => handler(message));
     });
 
     this.client.onError((error) => {
@@ -95,6 +103,29 @@ export class WebSocketRepository implements IWebSocketRepository {
    */
   onDisconnect(callback: () => void): void {
     this.disconnectHandlers.push(callback);
+  }
+
+  /**
+   * 연결 성공 콜백 등록
+   * @param callback 콜백 함수
+   */
+  onConnectionEstablished(callback: (message: ConnectionEstablishedMessage) => void): void {
+    this.connectionEstablishedHandlers.push(callback);
+  }
+
+  /**
+   * 메시지 전송 (일반 메시지)
+   * 백엔드 형식에 맞게 직접 전송
+   * @param message 전송할 메시지
+   */
+  sendMessage(message: { type: string; [key: string]: unknown }): void {
+    if (!this.isConnected()) {
+      throw new Error('WebSocket is not connected');
+    }
+
+    // 백엔드 형식에 맞게 직접 전송 (type과 다른 필드들을 함께 전송)
+    // 예: { type: "START_GAME", game_id: "..." }
+    (this.client as any).sendRaw(message);
   }
 }
 

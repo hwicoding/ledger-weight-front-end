@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, TextInput, ScrollView, Modal, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/presentation/navigation/types';
@@ -79,8 +80,10 @@ export default function LobbyScreen() {
       setToastVisible(true);
       return;
     }
-    startGame();
-    // 임시 게임 ID로 이동
+    // 게임 시작 요청 (gameId 전달)
+    startGame(gameId);
+    // 게임 시작 성공 시 GameScreen으로 이동 (GAME_STATE_UPDATE에서 phase가 'playing'이 되면 이동)
+    // 일단은 임시로 이동
     navigation.navigate('Game', { gameId });
   };
 
@@ -124,8 +127,12 @@ export default function LobbyScreen() {
   console.log('🖥️ LobbyScreen: About to render JSX');
   
   return (
-    <View style={styles.wrapper}>
-      <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
       <View style={styles.header}>
         <Text style={styles.title}>장부의 무게</Text>
         <Text style={styles.subtitle}>로비 화면</Text>
@@ -398,17 +405,20 @@ export default function LobbyScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   header: {
     padding: 20,

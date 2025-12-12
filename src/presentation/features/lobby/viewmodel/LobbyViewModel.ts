@@ -98,6 +98,22 @@ export const useLobbyViewModel = () => {
     }
     
     try {
+      // CONNECTION_ESTABLISHED 메시지 처리
+      if ('onConnectionEstablished' in websocketRepository) {
+        (websocketRepository as any).onConnectionEstablished((message: any) => {
+          console.log('✅ LobbyViewModel: CONNECTION_ESTABLISHED 수신', message);
+          
+          // 플레이어 ID 저장 (서버에서 받은 UUID)
+          if (message.player_id) {
+            dispatch(setCurrentPlayerId(message.player_id));
+            console.log('✅ LobbyViewModel: 플레이어 ID 저장됨', message.player_id);
+          }
+          
+          setIsConnected(true);
+          setIsConnecting(false);
+        });
+      }
+
       websocketRepository.onDisconnect(() => {
         setIsConnected(false);
         setIsConnecting(false);
@@ -130,13 +146,9 @@ export const useLobbyViewModel = () => {
       console.log(`🔌 LobbyViewModel: Connecting to ${wsUrl}`);
       
       await joinLobbyUseCase.execute(wsUrl);
-      console.log('✅ LobbyViewModel: Successfully joined lobby');
-      setIsConnected(true);
-      setIsConnecting(false);
-      
-      // 플레이어 ID 저장 (실제로는 서버에서 받아와야 함)
-      // 임시로 playerName을 ID로 사용
-      dispatch(setCurrentPlayerId(playerName));
+      console.log('✅ LobbyViewModel: WebSocket 연결 완료');
+      // CONNECTION_ESTABLISHED 메시지에서 플레이어 ID를 받을 때까지 대기
+      // 플레이어 ID는 onConnectionEstablished 핸들러에서 저장됨
     } catch (error) {
       console.error('❌ LobbyViewModel: Failed to join lobby', error);
       const errorMessage = error instanceof Error ? error.message : '로비 참가 실패';
@@ -156,7 +168,7 @@ export const useLobbyViewModel = () => {
   }, [lobbyService, dispatch]);
 
   // 게임 시작 요청
-  const handleStartGame = useCallback(async () => {
+  const handleStartGame = useCallback(async (gameId?: string) => {
     if (!lobbyService) {
       console.error('❌ LobbyViewModel: Cannot start game - service is null');
       dispatch(setError('서비스 초기화 실패'));
@@ -164,8 +176,11 @@ export const useLobbyViewModel = () => {
     }
     
     try {
-      await lobbyService.startGame();
+      console.log('🎮 LobbyViewModel: 게임 시작 요청', gameId ? `gameId: ${gameId}` : '');
+      await lobbyService.startGame(gameId);
+      console.log('✅ LobbyViewModel: 게임 시작 요청 전송 완료');
     } catch (error) {
+      console.error('❌ LobbyViewModel: 게임 시작 실패', error);
       const errorMessage = error instanceof Error ? error.message : '게임 시작 실패';
       dispatch(setError(errorMessage));
     }
