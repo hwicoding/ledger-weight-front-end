@@ -212,6 +212,8 @@
 
 ## 🧪 테스트 계획
 
+> **📖 상세 테스트 가이드**: [BACKEND_TEST_GUIDE.md](./BACKEND_TEST_GUIDE.md) 참고
+
 ### 1단계: 기본 연결 테스트
 - [ ] WebSocket 연결 성공 확인
 - [ ] `CONNECTION_ESTABLISHED` 메시지 수신 확인

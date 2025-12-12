@@ -37,7 +37,7 @@ export class LobbyService {
     };
 
     // WebSocketRepository의 sendMessage 메서드 사용
-    (this.websocketRepository as any).sendMessage(message);
+    this.websocketRepository.sendMessage(message);
   }
 
   /**

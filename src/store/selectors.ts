@@ -1,4 +1,8 @@
 import { RootState } from '@/store/store';
+import { createSelector } from 'reselect';
+
+// 빈 배열 상수 (메모이제이션을 위해)
+const EMPTY_PLAYERS_ARRAY: never[] = [];
 
 // Game Selectors
 export const selectGameState = (state: RootState) => state.game.gameState;
@@ -9,8 +13,12 @@ export const selectCurrentTurn = (state: RootState) =>
   state.game.gameState?.currentTurn;
 export const selectTurnState = (state: RootState) =>
   state.game.gameState?.turnState;
-export const selectPlayers = (state: RootState) =>
-  state.game.gameState?.players || [];
+
+// 메모이제이션된 selector로 players 반환
+export const selectPlayers = createSelector(
+  [selectGameState],
+  (gameState) => gameState?.players || EMPTY_PLAYERS_ARRAY
+);
 export const selectCurrentPlayer = (state: RootState) => {
   const gameState = state.game.gameState;
   const currentPlayerId = state.player.currentPlayerId;

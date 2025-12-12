@@ -53,6 +53,13 @@ export interface IWebSocketRepository {
   sendAction(action: PlayerAction): Promise<void>;
 
   /**
+   * 메시지 전송 (일반 메시지)
+   * 백엔드 형식에 맞게 직접 전송
+   * @param message 전송할 메시지 (type 필드 포함)
+   */
+  sendMessage(message: { type: string; [key: string]: unknown }): void;
+
+  /**
    * 게임 상태 업데이트 수신 콜백 등록
    * @param callback 콜백 함수
    */

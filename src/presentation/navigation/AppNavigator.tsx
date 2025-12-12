@@ -38,21 +38,13 @@ export default function AppNavigator() {
     );
   } catch (error) {
     console.error('❌ AppNavigator error:', error);
+    // 에러 발생 시 ErrorBoundary가 처리하므로, 간단한 에러 화면만 표시
     return (
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen 
-            name="Error" 
-            component={() => (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-                <Text style={{ fontSize: 18, color: '#d32f2f', textAlign: 'center' }}>
-                  Navigation Error: {error instanceof Error ? error.message : String(error)}
-                </Text>
-              </View>
-            )} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, color: '#d32f2f', textAlign: 'center' }}>
+          Navigation Error: {error instanceof Error ? error.message : String(error)}
+        </Text>
+      </View>
     );
   }
 }

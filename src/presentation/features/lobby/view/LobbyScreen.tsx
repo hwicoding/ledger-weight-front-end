@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, TextInput, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -8,20 +8,34 @@ import { useLobbyViewModel } from '@/presentation/features/lobby/viewmodel/Lobby
 import { PlayerCard, Toast, LoadingIndicator } from '@/presentation/shared/components';
 import { Player as DomainPlayer, Card as DomainCard } from '@/domain/entities';
 import { Player as StorePlayer } from '@/store/types';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectCurrentPlayerId, selectUIError } from '@/store/selectors';
-import { setError } from '@/store/slices/uiSlice';
+import { useAppSelector } from '@/store/hooks';
+import { selectCurrentPlayerId } from '@/store/selectors';
 
 type LobbyScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Lobby'
 >;
 
-export default function LobbyScreen() {
-  console.log('🖥️ LobbyScreen: Component rendering...');
+function LobbyScreen() {
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+  
+  // 리렌더링 추적 (개발 모드에서만)
+  if (__DEV__) {
+    useEffect(() => {
+      console.log(`🔄 LobbyScreen 렌더링 #${renderCountRef.current}`);
+    });
+  }
   
   const navigation = useNavigation<LobbyScreenNavigationProp>();
-  const dispatch = useAppDispatch();
+  const navigationRef = useRef(navigation);
+  useEffect(() => {
+    if (navigationRef.current !== navigation) {
+      console.log('🔄 LobbyScreen: navigation 참조 변경됨');
+      navigationRef.current = navigation;
+    }
+  }, [navigation]);
+  
   const [gameId, setGameId] = useState('temp-game-001');
   const [playerName, setPlayerName] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
@@ -36,32 +50,50 @@ export default function LobbyScreen() {
   const [aiPlayerCount, setAiPlayerCount] = useState(0);
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
-  console.log('🖥️ LobbyScreen: State initialized');
-
-  // ViewModel 사용
-  // React Hooks는 조건부로 호출할 수 없으므로 try-catch로 감쌀 수 없음
-  // 대신 ViewModel 내부에서 에러 처리를 해야 함
-  console.log('🖥️ LobbyScreen: Calling useLobbyViewModel...');
-  const viewModel = useLobbyViewModel();
-  console.log('✅ LobbyScreen: ViewModel initialized successfully');
-
+  // ViewModel 사용 - 에러 콜백 전달
+  // 상태 변경을 최소화하기 위해 useRef로 이전 에러 메시지 추적
+  const lastErrorRef = useRef<string | null>(null);
+  const handleError = useCallback((errorMessage: string) => {
+    // 같은 에러 메시지면 무시
+    if (lastErrorRef.current === errorMessage) {
+      return;
+    }
+    lastErrorRef.current = errorMessage;
+    
+    // 상태 변경 (React Native는 자동으로 배치 처리)
+    setToastMessage(errorMessage);
+    setToastType('error');
+    setToastVisible(true);
+  }, []);
+  
+  const viewModel = useLobbyViewModel(handleError);
   const { isConnecting, isConnected, players, joinLobby, leaveLobby, startGame } = viewModel;
   const currentPlayerId = useAppSelector(selectCurrentPlayerId);
-  const error = useAppSelector(selectUIError);
-  console.log('🖥️ LobbyScreen: ViewModel destructured, isConnected:', isConnected);
-
-  // 에러 메시지 표시
+  
+  // viewModel 객체 참조 변경 추적
+  const viewModelRef = useRef(viewModel);
   useEffect(() => {
-    if (error) {
-      setToastMessage(error);
-      setToastType('error');
-      setToastVisible(true);
-      // 에러 표시 후 Redux에서 제거
-      setTimeout(() => {
-        dispatch(setError(null));
-      }, 100);
+    if (viewModelRef.current !== viewModel) {
+      console.log('🔄 LobbyScreen: viewModel 객체 참조 변경됨', {
+        oldIsConnecting: viewModelRef.current.isConnecting,
+        newIsConnecting: viewModel.isConnecting,
+        oldIsConnected: viewModelRef.current.isConnected,
+        newIsConnected: viewModel.isConnected,
+        oldPlayersLength: viewModelRef.current.players.length,
+        newPlayersLength: viewModel.players.length,
+      });
+      viewModelRef.current = viewModel;
     }
-  }, [error, dispatch]);
+  }, [viewModel]);
+  
+  // currentPlayerId 변경 추적
+  const currentPlayerIdRef = useRef(currentPlayerId);
+  useEffect(() => {
+    if (currentPlayerIdRef.current !== currentPlayerId) {
+      console.log('🔄 LobbyScreen: currentPlayerId 변경됨', { from: currentPlayerIdRef.current, to: currentPlayerId });
+      currentPlayerIdRef.current = currentPlayerId;
+    }
+  }, [currentPlayerId]);
 
   const handleJoinLobby = () => {
     if (!gameId || !playerName) {
@@ -123,8 +155,6 @@ export default function LobbyScreen() {
   const handleCloseCreateRoom = () => {
     setShowCreateRoomModal(false);
   };
-
-  console.log('🖥️ LobbyScreen: About to render JSX');
   
   return (
     <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
@@ -600,4 +630,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+// React.memo로 감싸서 불필요한 리렌더링 방지
+export default React.memo(LobbyScreen);
+
 

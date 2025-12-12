@@ -125,7 +125,7 @@ export class WebSocketRepository implements IWebSocketRepository {
 
     // 백엔드 형식에 맞게 직접 전송 (type과 다른 필드들을 함께 전송)
     // 예: { type: "START_GAME", game_id: "..." }
-    (this.client as any).sendRaw(message);
+    this.client.sendRaw(message);
   }
 }
 
