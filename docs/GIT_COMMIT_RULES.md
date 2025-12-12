@@ -117,8 +117,39 @@ YYMMDD > front-end > react-native > [변경 내용 설명]
 - [ ] 커밋 메시지가 올바른 형식인가?
 - [ ] 한글이 포함된 경우 파일을 사용했는가?
 - [ ] Git Bash에서 실행했는가? (PowerShell 사용 시)
-- [ ] 커밋 전에 `git log --oneline -1`로 메시지 확인했는가?
-- [ ] 한글 깨짐이 없는가?
+- [ ] **커밋 전에 반드시 `git commit --dry-run` 또는 `git log --oneline -1`로 메시지 확인했는가?**
+- [ ] **한글 깨짐이 없는가? (깨진 문자가 보이면 커밋하지 않음)**
+- [ ] **커밋 실행 전에 최종 확인을 거쳤는가?**
+
+## 🚨 중요: 커밋 전 필수 확인 절차
+
+**커밋 실행 전 반드시 다음 단계를 거쳐야 합니다:**
+
+1. **커밋 메시지 파일 생성 (UTF-8)**
+   ```powershell
+   [System.IO.File]::WriteAllText('commit_msg.txt', '한글 메시지', [System.Text.Encoding]::UTF8)
+   ```
+
+2. **커밋 메시지 미리보기 (dry-run)**
+   ```bash
+   git commit -F commit_msg.txt --dry-run
+   ```
+
+3. **커밋 메시지 내용 확인**
+   ```bash
+   cat commit_msg.txt
+   # 또는 PowerShell에서
+   Get-Content commit_msg.txt -Encoding UTF8
+   ```
+
+4. **한글 깨짐 확인**
+   - `?곌껐`, `?닿껐` 같은 깨진 문자가 보이면 **절대 커밋하지 않음**
+   - 한글이 정상적으로 표시되어야 함
+
+5. **최종 확인 후 커밋**
+   - 모든 확인이 완료된 후에만 `git commit -F commit_msg.txt` 실행
+   - 커밋 후 즉시 `git log --oneline -1`로 확인
+   - 한글이 깨져 있으면 `git commit --amend`로 수정
 
 ---
 
