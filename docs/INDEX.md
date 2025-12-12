@@ -46,6 +46,11 @@
 - [Cursor IDE 디버그 콘솔](./tools/CURSOR_IDE_DEBUG_CONSOLE.md) - Cursor IDE 디버그 기능
 - [PowerShell 테마 리셋](./tools/POWERSHELL_THEME_RESET.md) - PowerShell 테마 복원
 
+## 🔄 워크플로우
+
+- [작업 워크플로우 규칙](./WORKFLOW.md) - Git 커밋 및 푸시 규칙
+- [Git 커밋 메시지 한글 깨짐 방지 규칙](./GIT_COMMIT_RULES.md) - 커밋 메시지 작성 가이드
+
 ---
 
 ## 🏗️ 아키텍처

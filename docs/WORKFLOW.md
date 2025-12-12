@@ -30,6 +30,30 @@ YYMMDD > front-end > react-native > [변경 내용 설명]
 251212 > front-end > react-native > docs 구조 재정리 및 디버깅 시스템 구축: docs 폴더 카테고리별 정리 (getting-started, debugging, troubleshooting, tools), ErrorBoundary 및 로깅 시스템 추가, App.tsx 및 LobbyViewModel 최적화, 개발 도구 및 설정 파일 개선
 ```
 
+### ⚠️ 한글 깨짐 방지
+
+**중요**: PowerShell에서 한글 커밋 메시지를 사용할 때 깨질 수 있습니다.
+
+**해결 방법:**
+1. **커밋 메시지 파일 사용** (권장)
+   ```bash
+   echo "한글 메시지" > commit_msg.txt
+   git commit -F commit_msg.txt
+   rm commit_msg.txt
+   ```
+
+2. **Git Bash 사용** (권장)
+   ```bash
+   git commit -m "한글 메시지"
+   ```
+
+3. **커밋 전 검증**
+   ```bash
+   bash scripts/commit-msg-validator.sh
+   ```
+
+**자세한 내용**: [Git 커밋 메시지 한글 깨짐 방지 규칙](./GIT_COMMIT_RULES.md)
+
 ### 워크플로우 예시
 
 #### 표준 워크플로우 (단계별 승인)
