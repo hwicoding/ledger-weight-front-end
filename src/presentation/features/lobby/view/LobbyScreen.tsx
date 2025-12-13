@@ -280,9 +280,10 @@ function LobbyScreen() {
           <View style={styles.playersList}>
             {players.map((player: StorePlayer) => {
               // Store 타입을 Domain Entity로 변환
+              // role이 null일 수 있으므로 기본값 사용 (Domain Player는 role이 필수이므로)
               const domainPlayer = new DomainPlayer(
                 player.id,
-                player.role,
+                (player.role || '상단주') as any, // PlayerRole 타입, null이면 기본값 사용
                 player.hp,
                 player.influence,
                 player.treasures,

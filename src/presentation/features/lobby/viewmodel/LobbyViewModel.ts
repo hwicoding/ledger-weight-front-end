@@ -166,27 +166,31 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void, onGa
       // 백엔드 메시지 형식에 맞춰 변환
       dispatch(setGameState({
         gameId: message.gameId,
-        players: message.players.map((p: any) => ({
+        players: message.players.map((p) => ({
           id: p.id,
-          role: (p.role || null) as any, // PlayerRole 타입
+          name: p.name || '',  // 플레이어 이름
+          role: (p.role || null) as any, // PlayerRole 타입 (자신의 역할만, 다른 플레이어는 null)
           hp: p.hp || 0,
           influence: p.influence || 0,
           treasures: (p.treasures || []) as any[], // Treasure 타입
-          hand: (p.hand || []).map((c: any) => ({
+          hand: (p.hand ? p.hand.map((c) => ({
+            id: c.id,
+            name: c.name,
+            suit: (c.suit || c.type || '') as any, // CardSuit 타입
+            rank: (c.rank || '') as any, // CardRank 타입
+            description: c.description || '',
+          })) : []),  // 자신의 핸드는 전체 카드, 다른 플레이어는 null이므로 빈 배열
+          handCount: p.handCount || 0,  // 다른 플레이어의 핸드 개수
+          tableCards: (p.tableCards || []).map((c) => ({
             id: c.id,
             name: c.name,
             suit: (c.suit || c.type || '') as any, // CardSuit 타입
             rank: (c.rank || '') as any, // CardRank 타입
             description: c.description || '',
           })),
-          tableCards: (p.tableCards || []).map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            suit: (c.suit || c.type || '') as any, // CardSuit 타입
-            rank: (c.rank || '') as any, // CardRank 타입
-            description: c.description || '',
-          })),
-          isBot: p.isBot || false,
+          isAlive: p.isAlive !== undefined ? p.isAlive : true,  // 플레이어 생존 여부
+          position: p.position || 0,  // 플레이어 위치
+          isBot: p.isBot || false,  // AI 플레이어 구분
         })),
         currentTurn: message.currentTurn || '',
         turnState: {
@@ -219,11 +223,19 @@ export const useLobbyViewModel = (onError?: (errorMessage: string) => void, onGa
       console.log('🔄 LobbyViewModel: ACTION_RESPONSE 수신', message);
       
       if (message.data.success) {
-        console.log('✅ LobbyViewModel: 게임 시작 성공', message.data.message);
-        // 성공 메시지는 GAME_STATE_UPDATE에서 phase가 'playing'이 되면 처리됨
+        // AI 플레이어 추가 성공인지 확인
+        if (message.data.added_count !== undefined) {
+          console.log(`✅ LobbyViewModel: AI 플레이어 ${message.data.added_count}명 추가 성공`, message.data.message);
+          // 성공 메시지는 GAME_STATE_UPDATE에서 플레이어 목록이 업데이트되면 자동으로 반영됨
+        } else {
+          // 게임 시작 성공
+          console.log('✅ LobbyViewModel: 게임 시작 성공', message.data.message);
+          // 성공 메시지는 GAME_STATE_UPDATE에서 phase가 'playing'이 되면 처리됨
+        }
       } else {
-        console.error('❌ LobbyViewModel: 게임 시작 실패', message.data.message);
-        const errorMessage = message.data.message || '게임 시작 실패';
+        // 실패 메시지 처리 (게임 시작 실패 또는 AI 플레이어 추가 실패)
+        console.error('❌ LobbyViewModel: 액션 실패', message.data.message);
+        const errorMessage = message.data.message || '작업 실패';
         if (onErrorRef.current) {
           onErrorRef.current(errorMessage);
         } else {

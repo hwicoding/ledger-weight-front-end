@@ -74,6 +74,7 @@ export const useGameViewModel = () => {
         gameId: domainGameState.gameId,
         players: domainGameState.players.map(p => ({
           id: p.id,
+          name: p.id, // Domain Player에는 name이 없으므로 id 사용 (실제로는 GAME_STATE_UPDATE에서 받은 name 사용)
           role: p.role,
           hp: p.hp,
           influence: p.influence,
@@ -85,6 +86,7 @@ export const useGameViewModel = () => {
             rank: c.rank,
             description: c.description,
           })),
+          handCount: p.hand.length, // Domain Player의 hand 길이 사용
           tableCards: p.tableCards.map(c => ({
             id: c.id,
             name: c.name,
@@ -92,6 +94,9 @@ export const useGameViewModel = () => {
             rank: c.rank,
             description: c.description,
           })),
+          isAlive: true, // Domain Player에는 isAlive가 없으므로 기본값
+          position: 0, // Domain Player에는 position이 없으므로 기본값
+          isBot: false, // Domain Player에는 isBot이 없으므로 기본값 (실제로는 GAME_STATE_UPDATE에서 받은 값 사용)
         })),
         currentTurn: domainGameState.currentTurn,
         turnState: {

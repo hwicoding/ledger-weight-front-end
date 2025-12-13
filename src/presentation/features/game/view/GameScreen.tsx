@@ -147,9 +147,10 @@ export default function GameScreen() {
     if (!targetPlayer) return false;
 
     // Domain Entity로 변환하여 canTarget 확인
+    // role이 null일 수 있으므로 기본값 사용
     const currentPlayerEntity = new DomainPlayer(
       currentPlayer.id,
-      currentPlayer.role,
+      (currentPlayer.role || '상단주') as any, // PlayerRole 타입, null이면 기본값 사용
       currentPlayer.hp,
       currentPlayer.influence,
       currentPlayer.treasures,
@@ -159,7 +160,7 @@ export default function GameScreen() {
 
     const targetPlayerEntity = new DomainPlayer(
       targetPlayer.id,
-      targetPlayer.role,
+      (targetPlayer.role || '상단주') as any, // PlayerRole 타입, null이면 기본값 사용
       targetPlayer.hp,
       targetPlayer.influence,
       targetPlayer.treasures,

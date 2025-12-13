@@ -21,7 +21,8 @@ export interface GameStateUpdateMessage {
   gameId: string;
   players: Array<{
     id: string;
-    role: string;
+    name: string;  // 플레이어 이름
+    role: string | null;  // 자신의 역할만 표시, 다른 플레이어는 null
     hp: number;
     influence: number;
     treasures: string[];
@@ -30,13 +31,17 @@ export interface GameStateUpdateMessage {
       name: string;
       suit: string;
       rank: string;
-    }>;
+    }> | null;  // 자신의 핸드는 전체 카드, 다른 플레이어는 null
+    handCount: number;  // 다른 플레이어의 핸드 개수
     tableCards?: Array<{
       id: string;
       name: string;
       suit: string;
       rank: string;
     }>;
+    isAlive: boolean;  // 플레이어 생존 여부
+    position: number;  // 플레이어 위치
+    isBot: boolean;  // AI 플레이어 구분 필드
   }>;
   currentTurn: string;
   turnState: {
@@ -106,6 +111,7 @@ export interface ActionResponseMessage {
     success: boolean;
     message: string;
     game_id?: string;
+    added_count?: number;  // AI 플레이어 추가 시 추가된 플레이어 수
   };
 }
 
